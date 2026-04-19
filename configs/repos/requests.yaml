@@ -1,0 +1,13 @@
+name: requests
+github_url: https://github.com/psf/requests.git
+default_branch: main
+language: python
+package_manager: pip
+install_command: uv pip install -e .
+test_command: python -m pytest
+dockerfile_path: Dockerfile
+supported_dependency_files:
+  - pyproject.toml
+  - setup.py
+  - requirements-dev.txt
+notes: Full v0 reference repository for the benchmark scaffold.

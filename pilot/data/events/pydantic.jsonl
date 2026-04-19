@@ -1,0 +1,6 @@
+{"bucket": "patch", "changelog_url": "https://github.com/pydantic/pydantic/releases/tag/2.12.3", "event_time": "2025-10-17T15:04:19", "from_version": "2.12.2", "new_advisories": [], "package": "pydantic", "to_version": "2.12.3"}
+{"bucket": "patch", "changelog_url": "https://github.com/pydantic/pydantic/releases/tag/2.12.4", "event_time": "2025-11-05T10:50:06", "from_version": "2.12.3", "new_advisories": [], "package": "pydantic", "to_version": "2.12.4"}
+{"bucket": "patch", "changelog_url": "https://github.com/pydantic/pydantic/releases/tag/2.12.5", "event_time": "2025-11-26T15:11:44", "from_version": "2.12.4", "new_advisories": [], "package": "pydantic", "to_version": "2.12.5"}
+{"bucket": "minor", "changelog_url": "https://github.com/pydantic/pydantic/releases/tag/2.13.0", "event_time": "2026-04-13T10:51:33", "from_version": "2.12.5", "new_advisories": [], "package": "pydantic", "to_version": "2.13.0"}
+{"bucket": "patch", "changelog_url": "https://github.com/pydantic/pydantic/releases/tag/2.13.1", "event_time": "2026-04-15T14:57:17", "from_version": "2.13.0", "new_advisories": [], "package": "pydantic", "to_version": "2.13.1"}
+{"bucket": "patch", "changelog_url": "https://github.com/pydantic/pydantic/releases/tag/2.13.2", "event_time": "2026-04-17T09:31:57", "from_version": "2.13.1", "new_advisories": [], "package": "pydantic", "to_version": "2.13.2"}

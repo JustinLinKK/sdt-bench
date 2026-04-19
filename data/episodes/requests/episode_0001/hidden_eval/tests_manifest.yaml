@@ -1,0 +1,8 @@
+tests:
+  - name: import_requests
+    description: Ensure requests imports under urllib3 2.0.7.
+  - name: prepare_request
+    description: Ensure a simple prepared request can be created.
+  - name: build_http_adapter
+    description: Ensure the default HTTP adapter can be instantiated.
+

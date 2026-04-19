@@ -1,0 +1,31 @@
+{
+  "8.2.0->8.2.1": {
+    "delete": 150,
+    "insert": 169,
+    "tombstone": 16,
+    "update": 3
+  },
+  "8.2.1->8.2.2": {
+    "delete": 93,
+    "insert": 160,
+    "tombstone": 62,
+    "update": 3
+  },
+  "8.2.2->8.3.0": {
+    "delete": 110,
+    "insert": 144,
+    "tombstone": 32,
+    "update": 3
+  },
+  "8.3.0->8.3.1": {
+    "delete": 99,
+    "insert": 155,
+    "tombstone": 47,
+    "update": 1
+  },
+  "8.3.1->8.3.2": {
+    "delete": 107,
+    "insert": 138,
+    "tombstone": 29
+  }
+}

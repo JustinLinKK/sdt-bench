@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+data/repos/
+data/snapshots/*/chunks.jsonl
+data/snapshots/*/*.py
+data/snapshots/*/*.md
+data/snapshots/*/*.rst
+data/snapshots/*/*.txt
+data/vector_db/

@@ -1,0 +1,6 @@
+{"bucket": "patch", "changelog_url": "https://github.com/psf/requests/releases/tag/2.32.2", "event_time": "2024-05-21T18:51:29", "from_version": "2.32.1", "new_advisories": [], "package": "requests", "to_version": "2.32.2"}
+{"bucket": "patch", "changelog_url": "https://github.com/psf/requests/releases/tag/2.32.3", "event_time": "2024-05-29T15:37:47", "from_version": "2.32.2", "new_advisories": [], "package": "requests", "to_version": "2.32.3"}
+{"bucket": "patch", "changelog_url": "https://github.com/psf/requests/releases/tag/2.32.4", "event_time": "2025-06-09T16:43:05", "from_version": "2.32.3", "new_advisories": [], "package": "requests", "to_version": "2.32.4"}
+{"bucket": "patch", "changelog_url": "https://github.com/psf/requests/releases/tag/2.32.5", "event_time": "2025-08-18T20:46:00", "from_version": "2.32.4", "new_advisories": [], "package": "requests", "to_version": "2.32.5"}
+{"bucket": "minor", "changelog_url": "https://github.com/psf/requests/releases/tag/2.33.0", "event_time": "2026-03-25T15:10:40", "from_version": "2.32.5", "new_advisories": [], "package": "requests", "to_version": "2.33.0"}
+{"bucket": "patch", "changelog_url": "https://github.com/psf/requests/releases/tag/2.33.1", "event_time": "2026-03-30T16:09:13", "from_version": "2.33.0", "new_advisories": [], "package": "requests", "to_version": "2.33.1"}

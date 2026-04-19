@@ -1,0 +1,36 @@
+pilot:
+  language: python
+  event_classes: [patch, minor, major, security]
+  max_events_per_repo: 6
+  acquisition_budget: 5
+  embedding_model: openai/text-embedding-3-small
+  # Paid-tier primary since all OpenRouter :free models were 429/503 upstream
+  # at pilot time (cost ~US$0.004 for the full 25-event run at 2026-04 rates).
+  agent_model: openai/gpt-4o-mini
+  agent_fallback_models:
+    - qwen/qwen3-coder:free
+    - z-ai/glm-4.5-air:free
+    - meta-llama/llama-3.3-70b-instruct:free
+  agent_throttle_seconds: 2
+
+repos:
+  - name: requests
+    github: psf/requests
+    package: requests
+    ecosystem: PyPI
+  - name: flask
+    github: pallets/flask
+    package: flask
+    ecosystem: PyPI
+  - name: httpx
+    github: encode/httpx
+    package: httpx
+    ecosystem: PyPI
+  - name: pydantic
+    github: pydantic/pydantic
+    package: pydantic
+    ecosystem: PyPI
+  - name: click
+    github: pallets/click
+    package: click
+    ecosystem: PyPI

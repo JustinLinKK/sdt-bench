@@ -1,0 +1,49 @@
+<!-- markdownlint-disable no-bare-urls -->
+<!-- markdownlint-disable descriptive-link-text -->
+<!-- markdownlint-disable-next-line first-line-heading -->
+
+## v2.13.1 (2026-04-15)
+
+[GitHub release](https://github.com/pydantic/pydantic/releases/tag/v2.13.1)
+
+### What's Changed
+
+#### Fixes
+
+* Fix `ValidationInfo.data` missing with `model_validate_json()` by @davidhewitt in [#13079](https://github.com/pydantic/pydantic/pull/13079)
+
+## v2.13.0 (2026-04-13)
+
+[GitHub release](https://github.com/pydantic/pydantic/releases/tag/v2.13.0)
+
+The highlights of the v2.13 release are available in the [blog post](https://pydantic.dev/articles/pydantic-v2-13-release).
+Several minor changes (considered non-breaking changes according to our [versioning policy](https://pydantic.dev/docs/validation/2.13/get-started/version-policy/#pydantic-v2))
+are also included in this release. Make sure to look into them before upgrading.
+
+This release contains the updated `pydantic.v1` namespace, matching version 1.10.26 which includes support for Python 3.14.
+
+### What's Changed
+
+See the beta releases for all changes sinces 2.12.
+
+#### New Features
+
+* Allow default factories of private attributes to take validated model data by @Viicos in [#13013](https://github.com/pydantic/pydantic/pull/13013)
+
+#### Changes
+
+* Warn when serializing fixed length tuples with too few items by @arvindsaripalli in [#13016](https://github.com/pydantic/pydantic/pull/13016)
+
+#### Fixes
+
+* Change type of `Any` when synthesizing `_build_sources` for  `BaseSettings.__init__()` signature in the mypy plugin by @Viicos in [#13049](https://github.com/pydantic/pydantic/pull/13049)
+* Fix model equality when using runtime `extra` configuration by @Viicos in [#13062](https://github.com/pydantic/pydantic/pull/13062)
+
+#### Packaging
+
+* Add zizmor for GitHub Actions workflow linting by @Viicos in [#13039](https://github.com/pydantic/pydantic/pull/13039)
+* Update jiter to v0.14.0 to fix a segmentation fault on musl Linux by @Viicos in [#13064](https://github.com/pydantic/pydantic/pull/13064)
+
+### New Contributors
+
+* @arvindsaripalli made their first contribution in [#13016](https://github.com/p

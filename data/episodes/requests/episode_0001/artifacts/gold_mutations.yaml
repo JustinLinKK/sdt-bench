@@ -1,0 +1,10 @@
+mutations:
+  - operation: insert
+    chunk_id: 3e024e5b06de51dbe60ec1a13f1b188a342299566e243fe8949d11c1947bf8d9
+    source_path: visible_docs/api_reference_excerpt.md
+  - operation: insert
+    chunk_id: 9fbd259d773f535095289d5da246a2e358a6296f56b1887e85ab3cd1e412f9de
+    source_path: visible_docs/changelog.md
+  - operation: insert
+    chunk_id: dd20af01cfa281f9851415c4083582505100f8cda3f0775a43e809487d16e0c0
+    source_path: visible_docs/migration_guide.md

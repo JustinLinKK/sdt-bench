@@ -1,0 +1,6 @@
+{"bucket": "minor", "changelog_url": "https://github.com/encode/httpx/releases/tag/0.26.0", "event_time": "2023-12-20T11:02:55", "from_version": "0.25.2", "new_advisories": [], "package": "httpx", "to_version": "0.26.0"}
+{"bucket": "minor", "changelog_url": "https://github.com/encode/httpx/releases/tag/0.27.0", "event_time": "2024-02-21T13:07:50", "from_version": "0.26.0", "new_advisories": [], "package": "httpx", "to_version": "0.27.0"}
+{"bucket": "patch", "changelog_url": "https://github.com/encode/httpx/releases/tag/0.27.1", "event_time": "2024-08-27T11:30:38", "from_version": "0.27.0", "new_advisories": [], "package": "httpx", "to_version": "0.27.1"}
+{"bucket": "patch", "changelog_url": "https://github.com/encode/httpx/releases/tag/0.27.2", "event_time": "2024-08-27T12:53:59", "from_version": "0.27.1", "new_advisories": [], "package": "httpx", "to_version": "0.27.2"}
+{"bucket": "minor", "changelog_url": "https://github.com/encode/httpx/releases/tag/0.28.0", "event_time": "2024-11-28T14:54:55", "from_version": "0.27.2", "new_advisories": [], "package": "httpx", "to_version": "0.28.0"}
+{"bucket": "patch", "changelog_url": "https://github.com/encode/httpx/releases/tag/0.28.1", "event_time": "2024-12-06T15:37:21", "from_version": "0.28.0", "new_advisories": [], "package": "httpx", "to_version": "0.28.1"}

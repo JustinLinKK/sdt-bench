@@ -1,0 +1,6 @@
+{"bucket": "minor", "changelog_url": "https://github.com/pallets/click/releases/tag/8.2.0", "event_time": "2025-05-10T22:21:01", "from_version": "8.1.8", "new_advisories": [], "package": "click", "to_version": "8.2.0"}
+{"bucket": "patch", "changelog_url": "https://github.com/pallets/click/releases/tag/8.2.1", "event_time": "2025-05-20T23:19:47", "from_version": "8.2.0", "new_advisories": [], "package": "click", "to_version": "8.2.1"}
+{"bucket": "patch", "changelog_url": "https://github.com/pallets/click/releases/tag/8.2.2", "event_time": "2025-08-02T02:23:39", "from_version": "8.2.1", "new_advisories": [], "package": "click", "to_version": "8.2.2"}
+{"bucket": "minor", "changelog_url": "https://github.com/pallets/click/releases/tag/8.3.0", "event_time": "2025-09-18T17:32:22", "from_version": "8.2.2", "new_advisories": [], "package": "click", "to_version": "8.3.0"}
+{"bucket": "patch", "changelog_url": "https://github.com/pallets/click/releases/tag/8.3.1", "event_time": "2025-11-15T20:45:41", "from_version": "8.3.0", "new_advisories": [], "package": "click", "to_version": "8.3.1"}
+{"bucket": "patch", "changelog_url": "https://github.com/pallets/click/releases/tag/8.3.2", "event_time": "2026-04-03T19:14:43", "from_version": "8.3.1", "new_advisories": [], "package": "click", "to_version": "8.3.2"}
