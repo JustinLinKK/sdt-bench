@@ -1,15 +1,35 @@
+# Python and tool caches
 .venv/
 __pycache__/
 *.py[cod]
+*.py,cover
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
 build/
 dist/
 *.egg-info/
+pip-wheel-metadata/
+
+# Runtime state and local benchmark outputs
 runs/
 .workspaces/
 .qdrant/
-.DS_Store
+
+# Generated benchmark authoring outputs
+benchmark_data/authoring/releases/
+benchmark_data/authoring/events/
 benchmark_data/authoring/snapshots/
+
+# Editor and OS noise
+.idea/
+.vscode/
+*.swp
+*.swo
+*.tmp
+.DS_Store
+Thumbs.db
