@@ -38,13 +38,13 @@ jobs:
 
       - name: Run benchmark episode
         run: |
-          EPISODE_PATH="data/episodes/${{ inputs.repo }}/${{ inputs.episode }}"
-          uv run python -m clab.cli validate-episode "$EPISODE_PATH"
-          uv run python -m clab.cli materialize "$EPISODE_PATH"
-          uv run python -m clab.cli ingest-visible-docs "$EPISODE_PATH" --backend "${{ inputs.backend }}"
-          uv run python -m clab.cli run-agent "$EPISODE_PATH" --agent "${{ inputs.agent }}" --backend "${{ inputs.backend }}"
-          uv run python -m clab.cli evaluate "$EPISODE_PATH"
-          uv run python -m clab.cli report "$EPISODE_PATH"
+          EPISODE_PATH="benchmark_data/episodes/${{ inputs.repo }}/${{ inputs.episode }}"
+          uv run python -m sdt_bench.cli validate-episode "$EPISODE_PATH"
+          uv run python -m sdt_bench.cli materialize "$EPISODE_PATH"
+          uv run python -m sdt_bench.cli ingest-visible-docs "$EPISODE_PATH" --backend "${{ inputs.backend }}"
+          uv run python -m sdt_bench.cli run-agent "$EPISODE_PATH" --agent "${{ inputs.agent }}" --backend "${{ inputs.backend }}"
+          uv run python -m sdt_bench.cli evaluate "$EPISODE_PATH"
+          uv run python -m sdt_bench.cli report "$EPISODE_PATH"
 
       - name: Collect artifacts
         run: |
@@ -61,4 +61,3 @@ jobs:
         with:
           name: benchmark-smoke-${{ inputs.repo }}-${{ inputs.episode }}
           path: benchmark-artifacts
-

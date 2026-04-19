@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from clab.evaluation.metrics import correctness_score, final_score_bundle, mutation_metrics
-from clab.schemas.metrics import EvaluationMetrics
-from clab.schemas.retrieval import MutationRecord
+from sdt_bench.evaluation.metrics import correctness_score, final_score_bundle, mutation_metrics
+from sdt_bench.schemas.metrics import EvaluationMetrics
+from sdt_bench.schemas.retrieval import MutationRecord
 
 
 def test_mutation_metrics_and_final_score() -> None:

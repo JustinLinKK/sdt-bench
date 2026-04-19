@@ -11,6 +11,8 @@
 - `test_command`: default visible test command
 - `dockerfile_path`: optional Dockerfile path for reproducible execution
 - `image_reference`: optional prebuilt image reference
+- `package_name`: package index name used by authoring commands
+- `ecosystem`: package ecosystem used by authoring commands
 - `supported_dependency_files`: dependency manifests relevant to the repo
 - `notes`: free-form implementation notes
 
@@ -45,5 +47,5 @@
 - `expected_files_of_interest`: files likely relevant to the task
 - `success_criteria`: per-episode evaluation thresholds
 - `budget`: execution budget hints
+  - includes `acquisition_budget` for agent-controlled visible-doc acquisition
 - `notes`: free-form notes
-

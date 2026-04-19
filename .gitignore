@@ -12,4 +12,4 @@ runs/
 .workspaces/
 .qdrant/
 .DS_Store
-
+benchmark_data/authoring/snapshots/

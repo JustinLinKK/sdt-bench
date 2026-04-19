@@ -14,5 +14,4 @@ COPY docs ./docs
 
 RUN uv sync --no-dev
 
-ENTRYPOINT ["uv", "run", "python", "-m", "clab.cli"]
-
+ENTRYPOINT ["uv", "run", "python", "-m", "sdt_bench.cli"]

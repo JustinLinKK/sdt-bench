@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from clab.knowledge.mutation_log import derive_mutation_records
-from clab.schemas.retrieval import Chunk
+from sdt_bench.knowledge.mutation_log import derive_mutation_records
+from sdt_bench.schemas.retrieval import Chunk
 
 
 def make_chunk(chunk_id: str, content_hash: str, index: int) -> Chunk:

@@ -10,6 +10,9 @@ An episode is a replayable unit of benchmark evaluation. It binds together:
 - hidden evaluation instructions and tests
 - scoring artifacts and expectations
 
+Episodes are stored under `benchmark_data/episodes/` so benchmark data stays separate
+from the benchmark runtime and reference agents.
+
 ## What is visible to the agent
 
 The agent can only observe:
@@ -43,3 +46,5 @@ Success is measured with both raw and aggregate metrics:
 - citation overlap with expected relevant docs
 - code churn and final weighted score
 
+Longitudinal aggregation can also summarize multiple runs with AUAC-like per-repo
+curves and regression-rate tracking.

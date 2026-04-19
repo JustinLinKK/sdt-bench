@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "toy-pkg"
 version = "0.1.0"
-description = "Toy package for clab smoke tests."
+description = "Toy package for sdt-bench smoke tests."
 requires-python = ">=3.11"
 
 [tool.setuptools.packages.find]

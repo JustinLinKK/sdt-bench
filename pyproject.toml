@@ -3,7 +3,7 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "clab-benchmark"
+name = "sdt-bench"
 version = "0.1.0"
 description = "Continuous-learning benchmark scaffold for dependency-drift coding agents."
 readme = "README.md"
@@ -16,10 +16,12 @@ dependencies = [
   "Typer>=0.16.0,<1.0.0",
   "rich>=14.0.0,<15.0.0",
   "qdrant-client>=1.10.0,<2.0.0",
+  "httpx>=0.28.0,<0.29.0",
+  "packaging>=24.0,<26.0",
 ]
 
 [project.scripts]
-clab = "clab.cli:app"
+"sdt-bench" = "sdt_bench.cli:app"
 
 [dependency-groups]
 dev = [
@@ -28,7 +30,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/clab"]
+packages = ["src/sdt_bench", "src/sdt_bench_baselines"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

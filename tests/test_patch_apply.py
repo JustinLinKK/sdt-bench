@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from clab.env.patching import apply_patch_text, measure_patch
-from clab.utils.subprocess import run_command
+from sdt_bench.env.patching import apply_patch_text, measure_patch
+from sdt_bench.utils.subprocess import run_command
 
 
 def test_patch_apply_and_measure(tmp_path: Path) -> None:
@@ -11,8 +11,8 @@ def test_patch_apply_and_measure(tmp_path: Path) -> None:
     repo.mkdir()
     (repo / "demo.txt").write_text("before\n", encoding="utf-8")
     run_command(["git", "init"], cwd=repo)
-    run_command(["git", "config", "user.email", "clab@example.com"], cwd=repo)
-    run_command(["git", "config", "user.name", "clab"], cwd=repo)
+    run_command(["git", "config", "user.email", "sdt-bench@example.com"], cwd=repo)
+    run_command(["git", "config", "user.name", "sdt-bench"], cwd=repo)
     run_command(["git", "add", "."], cwd=repo)
     run_command(["git", "commit", "-m", "init"], cwd=repo)
 

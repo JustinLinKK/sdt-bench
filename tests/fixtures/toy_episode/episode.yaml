@@ -38,5 +38,5 @@ budget:
   max_runtime_seconds: 120
   retrieval_top_k: 2
   max_visible_docs: 2
+  acquisition_budget: 2
 notes: Toy fixture episode used by the smoke integration test.
-

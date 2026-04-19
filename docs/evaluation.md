@@ -24,9 +24,11 @@ v0 computes:
 - citation overlap
 - final weighted score
 
+If present, `mutation_log.jsonl` from the agent run is the source of truth for
+mutation-quality scoring.
+
 ## Report generation
 
 The `report` command converts structured artifacts into a markdown summary with
 episode metadata, dependency event details, mutation stats, retrieval freshness,
 patch statistics, test outcomes, and the final score.
-

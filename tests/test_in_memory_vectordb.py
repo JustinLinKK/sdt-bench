@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from clab.schemas.retrieval import Chunk
-from clab.vectordb.in_memory_backend import InMemoryBackend
+from sdt_bench.schemas.retrieval import Chunk
+from sdt_bench.vectordb.in_memory_backend import InMemoryBackend
 
 
 def test_in_memory_vectordb_upsert_and_query() -> None:

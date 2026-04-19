@@ -20,19 +20,19 @@ network access.
 ## Running one benchmark episode
 
 ```bash
-python -m clab.cli validate-episode data/episodes/requests/episode_0001
-python -m clab.cli materialize data/episodes/requests/episode_0001
-python -m clab.cli ingest-visible-docs data/episodes/requests/episode_0001
-python -m clab.cli run-agent data/episodes/requests/episode_0001 --agent dummy
-python -m clab.cli evaluate data/episodes/requests/episode_0001
-python -m clab.cli report data/episodes/requests/episode_0001
+python -m sdt_bench.cli validate-episode benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli materialize benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli ingest-visible-docs benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli run-agent benchmark_data/episodes/requests/episode_0001 --agent baseline:dummy
+python -m sdt_bench.cli evaluate benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli report benchmark_data/episodes/requests/episode_0001
 ```
 
 ## Docker
 
 ```bash
-docker build -t clab .
-docker run --rm -v "$PWD:/app" clab validate-episode data/episodes/requests/episode_0001
+docker build -t sdt-bench .
+docker run --rm -v "$PWD:/app" sdt-bench validate-episode benchmark_data/episodes/requests/episode_0001
 ```
 
 ## Interpreting outputs
@@ -42,6 +42,7 @@ Each command writes artifacts under `runs/<episode_slug>/<run_id>/`. Common file
 - `materialization.json`
 - `environment.json`
 - `chunks.jsonl`
+- `agent_context.json`
 - `mutation_log.jsonl`
 - `retrieval_trace.json`
 - `patch.diff`
@@ -50,3 +51,14 @@ Each command writes artifacts under `runs/<episode_slug>/<run_id>/`. Common file
 - `result.json`
 - `report.md`
 
+## External agents
+
+You can replace the bundled baselines with your own framework:
+
+```bash
+python -m sdt_bench.cli run-agent benchmark_data/episodes/requests/episode_0001 \
+  --agent external \
+  --agent-command "python my_agent.py {context_json} {output_dir}"
+```
+
+The benchmark writes `agent_context.json` and expects outputs in `external_agent_output/`.

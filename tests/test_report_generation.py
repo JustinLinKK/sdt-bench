@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from clab.evaluation.reports import render_report
-from clab.schemas.metrics import EvaluationMetrics
-from clab.schemas.patch import PatchProposal, PatchResult, ReviewResult
-from clab.schemas.result import EvaluationResult
-from clab.schemas.retrieval import RetrievalTrace
+from sdt_bench.evaluation.reports import render_report
+from sdt_bench.schemas.metrics import EvaluationMetrics
+from sdt_bench.schemas.patch import PatchProposal, PatchResult, ReviewResult
+from sdt_bench.schemas.result import EvaluationResult
+from sdt_bench.schemas.retrieval import RetrievalTrace
 
 
 def test_report_generation_renders_markdown() -> None:
@@ -12,6 +12,7 @@ def test_report_generation_renders_markdown() -> None:
         episode_id="episode_0001",
         repo_name="toy",
         run_id="run_123",
+        agent_name="baseline:dummy",
         retrieval_trace=RetrievalTrace(
             episode_id="episode_0001",
             query="toy query",
@@ -39,5 +40,5 @@ def test_report_generation_renders_markdown() -> None:
         mutation_summary={"insert": 1, "update": 0, "delete": 0, "tombstone": 0, "total": 1},
     )
     report = render_report(result)
-    assert "# clab Report: episode_0001" in report
+    assert "# sdt-bench Report: episode_0001" in report
     assert "Final score: 0.750" in report

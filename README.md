@@ -1,13 +1,13 @@
-# clab
+# sdt-bench
 
-`clab` is a research-grade scaffold for benchmarking continual-learning coding
+`sdt-bench` is a research-grade scaffold for benchmarking continual-learning coding
 agents under dependency version drift. It focuses on replayable episodes, explicit
 vector database mutation logs, clean agent interfaces, and auditable evaluation.
 
 ## Motivation
 
 Modern coding agents often need fresh dependency knowledge after a repository has
-already been frozen. `clab` models that lifecycle directly:
+already been frozen. `sdt-bench` models that lifecycle directly:
 
 1. freeze a repo at `t0`
 2. introduce a dependency upgrade event at `t1`
@@ -24,9 +24,10 @@ was fresh, and how much code churn was introduced.
 This repository is the v0 scaffold. It includes:
 
 - full end-to-end support for one synthetic `requests` episode
-- a dummy agent and a retrieval baseline
+- a benchmark core package plus a separate bundled baseline-agent package
 - in-memory and embedded Qdrant vector DB backends
 - deterministic chunking and mutation logging
+- authoring commands for release harvesting, event generation, snapshot replay, artifact synthesis, and aggregation
 - CLI commands for validation, materialization, ingestion, execution, evaluation, and reporting
 - documentation, tests, Docker support, and CI workflows
 
@@ -37,10 +38,11 @@ The `pytest` repo is partially scaffolded, while `sphinx`, `sqlfluff`, and
 
 ```text
 .
+├── benchmark_data/     # benchmark episodes and authoring outputs
 ├── configs/            # global and per-repo config
-├── data/episodes/      # self-contained benchmark episodes
 ├── docs/               # benchmark and implementation documentation
-├── src/clab/           # framework package
+├── src/sdt_bench/      # benchmark core package
+├── src/sdt_bench_baselines/ # bundled reference agents
 ├── tests/              # unit and smoke integration tests
 ├── .github/workflows/  # CI and benchmark smoke runs
 ├── Dockerfile          # reproducible runtime image
@@ -52,12 +54,12 @@ The `pytest` repo is partially scaffolded, while `sphinx`, `sqlfluff`, and
 ```bash
 make install
 make test
-python -m clab.cli validate-episode data/episodes/requests/episode_0001
-python -m clab.cli materialize data/episodes/requests/episode_0001
-python -m clab.cli ingest-visible-docs data/episodes/requests/episode_0001
-python -m clab.cli run-agent data/episodes/requests/episode_0001 --agent dummy
-python -m clab.cli evaluate data/episodes/requests/episode_0001
-python -m clab.cli report data/episodes/requests/episode_0001
+python -m sdt_bench.cli validate-episode benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli materialize benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli ingest-visible-docs benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli run-agent benchmark_data/episodes/requests/episode_0001 --agent baseline:dummy
+python -m sdt_bench.cli evaluate benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli report benchmark_data/episodes/requests/episode_0001
 ```
 
 For the fast local smoke test path, run:
@@ -65,6 +67,26 @@ For the fast local smoke test path, run:
 ```bash
 make smoke
 ```
+
+## Authoring
+
+`sdt-bench` now includes first-pass authoring utilities for scaling beyond hand-authored episodes:
+
+```bash
+sdt-bench author-harvest-releases --repo-name requests
+sdt-bench author-build-events --repo-name requests
+sdt-bench author-materialize-snapshot --repo-name requests --ref refs/tags/v2.31.0
+sdt-bench author-synthesize-artifacts benchmark_data/episodes/requests/episode_0001
+sdt-bench aggregate-results --results-root runs
+```
+
+## Using your own agent framework
+
+The benchmark core is separate from the bundled baselines. You can:
+
+- use a bundled reference agent such as `baseline:dummy`, `baseline:retrieval_baseline`, `baseline:static_rag`, or `baseline:full_reindex`
+- load a Python agent factory with `--agent-factory module.path:callable`
+- run an external framework with `--agent-command` and exchange files through `agent_context.json` and `external_agent_output/`
 
 ## Supported repos
 
@@ -82,6 +104,7 @@ make smoke
 - [docs/benchmark_spec.md](docs/benchmark_spec.md)
 - [docs/episode_schema.md](docs/episode_schema.md)
 - [docs/agent_interface.md](docs/agent_interface.md)
+- [docs/authoring.md](docs/authoring.md)
 - [docs/vector_db_protocol.md](docs/vector_db_protocol.md)
 - [docs/evaluation.md](docs/evaluation.md)
 - [docs/repo_onboarding.md](docs/repo_onboarding.md)
@@ -90,7 +113,6 @@ make smoke
 ## Limitations of v0
 
 - only one full benchmark episode is provided out of the box
-- the default retrieval baseline emits a no-op patch unless an external adapter is configured
+- the bundled baselines are intentionally simple reference agents, not competitive systems
 - hidden evaluation for the bundled `requests` episode is intentionally narrow and synthetic
 - Docker support is provided for reproducibility, but the default local flow runs on the host for speed
-

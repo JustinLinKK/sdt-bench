@@ -5,16 +5,16 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from clab.cli import app
-from clab.utils.fs import read_json, read_yaml, write_yaml
-from clab.utils.subprocess import run_command
+from sdt_bench.cli import app
+from sdt_bench.utils.fs import read_json, read_yaml, write_yaml
+from sdt_bench.utils.subprocess import run_command
 
 
 def _prepare_git_repo(src: Path, dst: Path) -> str:
     shutil.copytree(src, dst)
     run_command(["git", "init"], cwd=dst)
-    run_command(["git", "config", "user.email", "clab@example.com"], cwd=dst)
-    run_command(["git", "config", "user.name", "clab"], cwd=dst)
+    run_command(["git", "config", "user.email", "sdt-bench@example.com"], cwd=dst)
+    run_command(["git", "config", "user.name", "sdt-bench"], cwd=dst)
     run_command(["git", "add", "."], cwd=dst)
     run_command(["git", "commit", "-m", "fixture"], cwd=dst)
     commit = run_command(["git", "rev-parse", "HEAD"], cwd=dst).stdout.strip()
@@ -51,7 +51,7 @@ def test_smoke_integration(tmp_path: Path, monkeypatch) -> None:
     repo_commit = _prepare_git_repo(Path("tests/fixtures/toy_repo"), tmp_path / "toy_repo")
     config_dir = _prepare_temp_config(tmp_path, tmp_path / "toy_repo")
     episode_dir = _prepare_temp_episode(tmp_path, repo_commit)
-    monkeypatch.setenv("CLAB_CONFIG_DIR", str(config_dir))
+    monkeypatch.setenv("SDT_BENCH_CONFIG_DIR", str(config_dir))
 
     runner = CliRunner()
     for args in [

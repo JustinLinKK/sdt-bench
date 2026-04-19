@@ -1,5 +1,6 @@
 default_backend: qdrant
 paths:
+  benchmark_data_dir: benchmark_data
   runs_dir: runs
   workspaces_dir: .workspaces
   qdrant_dir: .qdrant
@@ -11,4 +12,3 @@ runtime:
   install_timeout_seconds: 600
   test_timeout_seconds: 600
   query_joiner: "\n"
-
