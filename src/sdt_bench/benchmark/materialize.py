@@ -1,71 +1,145 @@
 from __future__ import annotations
 
 import shutil
-from pathlib import Path
 
-from sdt_bench.env import create_run_layout, install_repo, set_last_run
+from sdt_bench.benchmark.loader import LoadedStep
+from sdt_bench.benchmark.visibility import build_docs_manifest, resolve_visible_docs
+from sdt_bench.env import (
+    TimelineRunLayout,
+    create_step_layout,
+    install_repo,
+)
 from sdt_bench.repos import get_repo_adapter
-from sdt_bench.schemas.episode import EpisodeSpec
-from sdt_bench.schemas.repo import RepoSpec
-from sdt_bench.utils.fs import ensure_dir, write_json
+from sdt_bench.schemas import Chunk, MemoryManifest, RepoSpec, StepInputManifest
+from sdt_bench.utils.fs import ensure_dir, write_json, write_jsonl
 from sdt_bench.utils.git import checkout_commit, clone_repo
 from sdt_bench.utils.subprocess import run_command
 
 
-def materialize_episode(
+def materialize_step(
     *,
     global_config: dict,
-    episode_dir: Path,
-    episode: EpisodeSpec,
+    bundle: LoadedStep,
     repo_spec: RepoSpec,
+    timeline_layout: TimelineRunLayout,
+    step_index: int,
+    agent_name: str,
+    memory_mode: str,
+    memory_chunks: list[Chunk],
 ) -> dict[str, str]:
-    layout = create_run_layout(global_config, episode)
-    if layout.workspace_dir.exists():
-        shutil.rmtree(layout.workspace_dir)
+    step_root = timeline_layout.steps_root / f"{step_index:03d}__{bundle.episode.episode_id}"
+    if step_root.exists():
+        shutil.rmtree(step_root)
+    layout = create_step_layout(
+        timeline_layout,
+        step_index=step_index,
+        episode_id=bundle.episode.episode_id,
+    )
+
     clone_repo(repo_spec.github_url, layout.workspace_dir)
-    checkout_commit(layout.workspace_dir, episode.base_commit)
+    checkout_commit(layout.workspace_dir, bundle.from_state.repo_commit)
 
     adapter = get_repo_adapter(repo_spec)
     adapter.assert_supported()
     adapter.prepare_workspace(layout.workspace_dir)
 
-    runtime = global_config["runtime"]
     install_result = install_repo(
         layout.workspace_dir,
-        repo_spec.install_command,
-        timeout_seconds=runtime["install_timeout_seconds"],
+        bundle.to_state.environment.install_command,
+        timeout_seconds=global_config["runtime"]["install_timeout_seconds"],
+        offline=bundle.to_state.environment.offline,
     )
     freeze = run_command(
         ["python", "-m", "pip", "freeze"],
         cwd=layout.workspace_dir,
-        timeout=runtime["install_timeout_seconds"],
+        timeout=global_config["runtime"]["install_timeout_seconds"],
         check=False,
     )
 
-    ensure_dir(layout.run_root)
+    visible_docs = resolve_visible_docs(bundle)
+    docs_manifest = build_docs_manifest(visible_docs)
+    for entry in visible_docs:
+        destination = layout.docs_available_dir / entry.relative_path
+        ensure_dir(destination.parent)
+        destination.write_text(entry.source_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+    visible_failure_destination = layout.visible_failure_dir / "ci_failure.txt"
+    visible_failure_text = (
+        bundle.episode_dir / bundle.episode.visible_failure_path
+    ).read_text(encoding="utf-8")
+    visible_failure_destination.write_text(visible_failure_text, encoding="utf-8")
+
+    memory_manifest = MemoryManifest(
+        snapshot_id=f"{bundle.timeline.timeline_id}:{step_index:03d}",
+        source_episode_id=bundle.timeline.episode_ids[step_index - 1] if step_index > 0 else None,
+        chunk_count=len(memory_chunks),
+        document_count=len({chunk.document_id for chunk in memory_chunks}),
+        persisted=memory_mode == "persistent" and bool(memory_chunks),
+    )
     write_json(
-        layout.run_root / "materialization.json",
+        layout.memory_dir / "manifest.json",
+        memory_manifest.model_dump(mode="json"),
+    )
+    write_jsonl(
+        layout.memory_dir / "chunks.jsonl",
+        [chunk.model_dump(mode="json") for chunk in memory_chunks],
+    )
+
+    write_json(layout.input_dir / "episode.json", bundle.episode.model_dump(mode="json"))
+    write_json(layout.input_dir / "event.json", bundle.event.model_dump(mode="json"))
+    write_json(layout.input_dir / "from_state.json", bundle.from_state.model_dump(mode="json"))
+    write_json(layout.input_dir / "to_state.json", bundle.to_state.model_dump(mode="json"))
+    write_json(layout.input_dir / "repo_spec.json", repo_spec.model_dump(mode="json"))
+    write_json(
+        layout.docs_dir / "manifest.json",
+        {"documents": [document.model_dump(mode="json") for document in docs_manifest]},
+    )
+
+    input_manifest = StepInputManifest(
+        timeline_id=bundle.timeline.timeline_id,
+        repo_name=bundle.episode.repo_name,
+        episode_id=bundle.episode.episode_id,
+        step_index=step_index,
+        agent_name=agent_name,
+        run_id=timeline_layout.run_id,
+        memory_mode=memory_mode,
+        from_state_id=bundle.from_state.state_id,
+        to_state_id=bundle.to_state.state_id,
+        event_id=bundle.event.event_id,
+        available_at=bundle.to_state.timestamp,
+        workspace=str(layout.workspace_dir),
+        input_dir=str(layout.input_dir),
+        output_dir=str(layout.output_dir),
+        available_visible_doc_paths=[document.path for document in docs_manifest],
+        visible_failure_path=str(visible_failure_destination),
+        docs_manifest_path=str(layout.docs_dir / "manifest.json"),
+        memory_manifest=memory_manifest,
+    )
+    write_json(layout.input_dir / "manifest.json", input_manifest.model_dump(mode="json"))
+
+    write_json(
+        layout.harness_dir / "materialization.json",
         {
-            "episode_id": episode.episode_id,
-            "repo_name": episode.repo_name,
-            "base_commit": episode.base_commit,
-            "base_ref": episode.base_ref,
+            "timeline_id": bundle.timeline.timeline_id,
+            "episode_id": bundle.episode.episode_id,
+            "step_index": step_index,
             "workspace": str(layout.workspace_dir),
-            "episode_dir": str(episode_dir),
-            "run_id": layout.run_id,
+            "input_dir": str(layout.input_dir),
+            "output_dir": str(layout.output_dir),
+            "harness_dir": str(layout.harness_dir),
         },
     )
-    write_json(layout.run_root / "install.json", install_result)
     write_json(
-        layout.run_root / "environment.json",
+        layout.harness_dir / "environment.json",
         {
+            "install": install_result,
             "pip_freeze": freeze.stdout.splitlines(),
-            "backend_dir": str(layout.backend_dir),
         },
     )
-    set_last_run(layout)
     return {
-        "run_id": layout.run_id,
+        "run_id": timeline_layout.run_id,
+        "step_root": str(layout.step_root),
         "workspace": str(layout.workspace_dir),
-        "run_root": str(layout.run_root),
+        "input_dir": str(layout.input_dir),
+        "output_dir": str(layout.output_dir),
     }

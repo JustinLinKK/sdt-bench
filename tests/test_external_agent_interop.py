@@ -3,12 +3,17 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from sdt_bench.integrations.external_agents import run_external_agent_command
-from sdt_bench.schemas import AgentContext, EpisodeBudget, EpisodeSpec, RepoSpec
-from sdt_bench.schemas.event import DependencyEvent
+from typer.testing import CliRunner
+
+from sdt_bench.cli import app
+from sdt_bench.utils.fs import read_json, read_jsonl
+from tests.helpers import make_temp_config, toy_episode_path
 
 
-def test_run_external_agent_command(tmp_path: Path) -> None:
+def test_external_agent_reads_input_bundle_and_writes_required_output(tmp_path: Path, monkeypatch) -> None:
+    config_dir = make_temp_config(tmp_path)
+    monkeypatch.setenv("SDT_BENCH_CONFIG_DIR", str(config_dir))
+
     script_path = tmp_path / "agent.py"
     script_path.write_text(
         """
@@ -16,73 +21,62 @@ import json
 import sys
 from pathlib import Path
 
-context_path = Path(sys.argv[1])
+input_dir = Path(sys.argv[1])
 output_dir = Path(sys.argv[2])
-context = json.loads(context_path.read_text())
+manifest = json.loads((input_dir / "manifest.json").read_text())
+memory_manifest = json.loads((input_dir / "memory" / "manifest.json").read_text())
+assert not (input_dir / "hidden_eval").exists()
+docs_manifest = json.loads((input_dir / "docs" / "manifest.json").read_text())
 output_dir.mkdir(parents=True, exist_ok=True)
+(output_dir / "plan.json").write_text(json.dumps({"summary": "external ok", "steps": ["inspect bundle"]}))
+(output_dir / "ingestion_decision.json").write_text(json.dumps({
+    "strategy": "selected_visible",
+    "ingest_visible_docs": True,
+    "selected_visible_doc_paths": [docs_manifest["documents"][0]["path"]],
+    "acquisitions": [docs_manifest["documents"][0]["path"]],
+    "reason": "ingest first visible doc"
+}))
+(output_dir / "retrieval_decision.json").write_text(json.dumps({"query": "toy greet", "top_k": 1, "reason": "smoke"}))
+(output_dir / "retrieval_trace.json").write_text(json.dumps({
+    "episode_id": manifest["episode_id"],
+    "query": "toy greet",
+    "retrieved_chunk_ids": [],
+    "retrieved_document_ids": [],
+    "scores": [],
+    "freshness_labels": [],
+    "timestamp": "2026-01-01T00:00:00+00:00"
+}))
 (output_dir / "patch.diff").write_text("")
-(output_dir / "citations.json").write_text(json.dumps({"citations": context["available_visible_doc_paths"][:1]}))
-(output_dir / "review.json").write_text(json.dumps({"summary": "external ok", "concerns": []}))
-(output_dir / "mutation_log.jsonl").write_text("")
+(output_dir / "citations.json").write_text(json.dumps({"citations": [docs_manifest["documents"][0]["path"]]}))
+(output_dir / "memory_mutations.jsonl").write_text("")
+(output_dir / "review.json").write_text(json.dumps({"summary": f"memory={memory_manifest['chunk_count']}", "concerns": []}))
 """.strip(),
         encoding="utf-8",
     )
-    context = AgentContext(
-        episode=EpisodeSpec(
-            episode_id="episode_0001",
-            repo_name="toy",
-            base_commit="abcdef0",
-            base_ref="refs/heads/main",
-            dependency_event=DependencyEvent(
-                event_id="event",
-                dependency_name="toydep",
-                ecosystem="pypi",
-                old_version="0.1.0",
-                new_version="0.2.0",
-                event_type="synthetic",
-                summary="synthetic",
-                breaking_change_expected=False,
-                visible_doc_paths=["visible_docs/changelog.md"],
-                gold_mutation_paths=[],
-                metadata={},
-            ),
-            task_family="smoke",
-            task_prompt="test",
-            visible_failure_signal="signal",
-            visible_doc_paths=["visible_docs/changelog.md"],
-            hidden_test_command="echo",
-            hidden_test_manifest="hidden_eval/tests_manifest.yaml",
-        ),
-        repo_spec=RepoSpec(
-            name="toy",
-            github_url="https://example.com/toy.git",
-            package_name="toy",
-            ecosystem="PyPI",
-            default_branch="main",
-            language="python",
-            package_manager="pip",
-            install_command="uv pip install -e .",
-            test_command="python -m pytest",
-        ),
-        workspace=str(tmp_path),
-        run_dir=str(tmp_path),
-        task_prompt="test",
-        visible_failure_signal="signal",
-        available_visible_doc_paths=["visible_docs/changelog.md"],
-        visible_chunks_path=None,
-        retrieved_chunks=[],
-        budget=EpisodeBudget(max_runtime_seconds=10, retrieval_top_k=1, max_visible_docs=1, acquisition_budget=1),
-        backend_name="in_memory",
+
+    runner = CliRunner()
+    episode_dir = toy_episode_path("episode_0001")
+    result = runner.invoke(app, ["materialize-step", str(episode_dir), "--agent", "external"])
+    assert result.exit_code == 0, result.stdout
+    result = runner.invoke(
+        app,
+        [
+            "run-step",
+            str(episode_dir),
+            "--agent",
+            "external",
+            "--agent-command",
+            f'"{sys.executable}" "{script_path}" "{{input_dir}}" "{{output_dir}}"',
+        ],
     )
-    command = f'"{sys.executable}" "{script_path}" "{{context_json}}" "{{output_dir}}"'
-    plan, ingestion, retrieval, trace, proposal, review, mutations = run_external_agent_command(
-        context=context,
-        command_template=command,
-        run_root=tmp_path,
-    )
-    assert plan.summary
-    assert ingestion.strategy == "none"
-    assert retrieval.query == ""
-    assert proposal.citations_used == ["visible_docs/changelog.md"]
-    assert review.summary == "external ok"
-    assert mutations == []
+    assert result.exit_code == 0, result.stdout
+
+    runs_root = tmp_path / "runtime" / "runs" / "toy" / "external"
+    run_id = (runs_root / "last_run.txt").read_text(encoding="utf-8").strip()
+    step_root = runs_root / run_id / "steps" / "000__episode_0001"
+    output_dir = step_root / "output"
+    assert (output_dir / "plan.json").exists()
+    assert (output_dir / "review.json").exists()
+    review = read_json(output_dir / "review.json")
+    assert review["summary"] == "memory=0"
+    assert read_jsonl(output_dir / "memory_mutations.jsonl") == []

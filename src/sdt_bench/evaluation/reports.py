@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from sdt_bench.schemas.result import EvaluationResult
+from sdt_bench.schemas.result import StepEvaluationResult, TimelineEvaluationResult
 
 
-def render_report(result: EvaluationResult) -> str:
-    event = result.patch_result.episode_id
+def render_step_report(result: StepEvaluationResult) -> str:
     lines = [
-        f"# sdt-bench Report: {result.episode_id}",
+        f"# sdt-bench Step Report: {result.episode_id}",
         "",
-        "## Episode",
+        "## Step",
+        f"- Timeline: {result.timeline_id}",
         f"- Repo: {result.repo_name}",
         f"- Run ID: {result.run_id}",
         f"- Agent: {result.agent_name}",
         f"- Episode ID: {result.episode_id}",
-        f"- Event: {event}",
+        f"- Step Index: {result.step_index}",
         "",
         "## Retrieval",
         f"- Query: {result.retrieval_trace.query or '(none)'}",
@@ -31,6 +31,11 @@ def render_report(result: EvaluationResult) -> str:
         f"- Visible tests passed: {result.patch_result.visible_test_status}",
         f"- Hidden tests passed: {result.patch_result.hidden_test_status}",
         "",
+        "## Memory",
+        f"- Snapshot ID: {result.memory_manifest.snapshot_id}",
+        f"- Memory chunks: {result.memory_manifest.chunk_count}",
+        f"- Memory persisted: {result.memory_manifest.persisted}",
+        "",
         "## Mutation summary",
         f"- Total mutations: {result.mutation_summary['total']}",
         f"- Insert: {result.mutation_summary['insert']}",
@@ -43,4 +48,35 @@ def render_report(result: EvaluationResult) -> str:
         f"- Churn score: {result.metrics.churn_score:.3f}",
         f"- Final score: {result.metrics.final_score:.3f}",
     ]
+    return "\n".join(lines) + "\n"
+
+
+def render_timeline_report(result: TimelineEvaluationResult) -> str:
+    lines = [
+        f"# sdt-bench Timeline Report: {result.timeline_id}",
+        "",
+        "## Run",
+        f"- Repo: {result.repo_name}",
+        f"- Run ID: {result.run_id}",
+        f"- Agent: {result.agent_name}",
+        f"- Memory mode: {result.memory_mode}",
+        "",
+        "## Aggregate",
+        f"- Steps: {result.aggregate.step_count}",
+        f"- Hidden pass rate: {result.aggregate.hidden_pass_rate:.3f}",
+        f"- Cumulative success: {result.aggregate.cumulative_success:.3f}",
+        f"- Adaptation area: {result.aggregate.adaptation_area:.3f}",
+        f"- Average stale retrieval rate: {result.aggregate.average_stale_retrieval_rate:.3f}",
+        f"- Mean time to recover: {result.aggregate.mean_time_to_recover:.3f}",
+        f"- Max drawdown: {result.aggregate.max_drawdown:.3f}",
+        "",
+        "## Steps",
+    ]
+    for step in result.steps:
+        lines.append(
+            f"- {step.step_index:03d} {step.episode_id}: "
+            f"final={step.metrics.final_score:.3f}, "
+            f"hidden={step.metrics.hidden_tests_passed}, "
+            f"stale={step.metrics.stale_chunk_fraction:.3f}"
+        )
     return "\n".join(lines) + "\n"

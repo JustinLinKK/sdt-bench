@@ -1,4 +1,4 @@
-default_backend: qdrant
+default_backend: in_memory
 paths:
   benchmark_data_dir: benchmark_data
   runs_dir: runs

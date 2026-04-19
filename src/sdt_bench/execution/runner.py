@@ -2,71 +2,111 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sdt_bench.benchmark.loader import load_global_config
-from sdt_bench.env.workspace import resolve_existing_run
+from sdt_bench.env import StepLayout, TimelineRunLayout, create_step_layout
 from sdt_bench.execution.generate_patch import execute_patch_generation
 from sdt_bench.execution.planner import execute_plan
 from sdt_bench.execution.retrieve import execute_retrieval
 from sdt_bench.execution.review import execute_review
 from sdt_bench.integrations.agents import load_agent
 from sdt_bench.integrations.external_agents import run_external_agent_command
-from sdt_bench.knowledge.ingestion import apply_ingestion_decision
+from sdt_bench.knowledge.ingestion import apply_ingestion_decision, stage_visible_docs
 from sdt_bench.schemas import (
     AgentContext,
     AgentPlan,
     Chunk,
-    EpisodeSpec,
+    DependencyEventSpec,
     IngestionDecision,
+    MemoryManifest,
     MutationRecord,
     PatchProposal,
+    ProgrammingEpisodeSpec,
     RepoSpec,
     RetrievalDecision,
     RetrievalTrace,
     ReviewResult,
+    StepInputManifest,
+    TemporalStateSpec,
+    TimelineSpec,
 )
 from sdt_bench.utils.fs import read_json, read_jsonl, write_json, write_jsonl
 from sdt_bench.vectordb import build_backend
 
 
-def run_agent_episode(
+def run_agent_step(
     *,
-    episode_dir: Path,
-    episode: EpisodeSpec,
+    global_config: dict,
+    timeline: TimelineSpec,
+    episode: ProgrammingEpisodeSpec,
+    event: DependencyEventSpec,
+    from_state: TemporalStateSpec,
+    to_state: TemporalStateSpec,
     repo_spec: RepoSpec,
-    run_id: str | None,
+    timeline_layout: TimelineRunLayout,
+    step_index: int,
     agent_name: str,
     adapter_name: str,
     agent_factory: str | None,
     agent_command: str | None,
     backend_name: str | None = None,
 ) -> dict[str, str]:
-    global_config = load_global_config()
-    layout = resolve_existing_run(global_config, episode, run_id)
-    materialization = read_json(layout.run_root / "materialization.json")
+    layout = create_step_layout(
+        timeline_layout,
+        step_index=step_index,
+        episode_id=episode.episode_id,
+    )
+    manifest = StepInputManifest.model_validate(read_json(layout.input_dir / "manifest.json"))
+    memory_manifest = MemoryManifest.model_validate(read_json(layout.memory_dir / "manifest.json"))
+    memory_chunks = _load_chunks(layout.memory_dir / "chunks.jsonl")
+
     runtime = global_config["runtime"]
+    selected_backend = backend_name or global_config.get("default_backend", "in_memory")
     backend = build_backend(
-        name=backend_name or global_config["default_backend"],
-        storage_path=layout.backend_dir,
-        collection_name=layout.episode_slug,
+        name=selected_backend,
+        storage_path=layout.harness_dir / "backend",
+        collection_name=f"{timeline.timeline_id}__{episode.episode_id}",
         dimensions=runtime["vector_dimensions"],
     )
-    chunks_path = layout.run_root / "chunks.jsonl"
-    candidate_chunks = _load_candidate_chunks(chunks_path)
-    if not agent_command and not chunks_path.exists():
-        raise FileNotFoundError("Visible doc chunks are missing. Run ingest-visible-docs first.")
+    if memory_chunks:
+        backend.upsert_chunks(memory_chunks)
 
-    context = AgentContext(
+    candidate_chunks, _, _ = stage_visible_docs(
+        docs_root=layout.docs_available_dir,
+        visible_doc_paths=manifest.available_visible_doc_paths,
         episode=episode,
+        version_tag=to_state.dependency_snapshot.get(event.dependency_name),
+        chunk_size=runtime["chunk_size"],
+        overlap=runtime["chunk_overlap"],
+    )
+    write_jsonl(
+        layout.harness_dir / "candidate_chunks.jsonl",
+        [chunk.model_dump(mode="json") for chunk in candidate_chunks],
+    )
+
+    visible_failure_signal = Path(manifest.visible_failure_path).read_text(encoding="utf-8")
+    context = AgentContext(
+        timeline=timeline,
+        episode=episode,
+        event=event,
+        from_state=from_state,
+        to_state=to_state,
         repo_spec=repo_spec,
-        workspace=materialization["workspace"],
-        run_dir=str(layout.run_root),
+        step_manifest=manifest,
+        step_index=step_index,
+        workspace=str(layout.workspace_dir),
+        input_dir=str(layout.input_dir),
+        output_dir=str(layout.output_dir),
+        run_dir=str(timeline_layout.run_root),
         task_prompt=episode.task_prompt,
-        visible_failure_signal=episode.visible_failure_signal,
-        available_visible_doc_paths=episode.visible_doc_paths,
-        visible_chunks_path=str(chunks_path),
+        visible_failure_signal=visible_failure_signal,
+        available_visible_doc_paths=manifest.available_visible_doc_paths,
+        docs_manifest_path=manifest.docs_manifest_path,
+        memory_manifest=memory_manifest,
+        memory_chunks_path=str(layout.memory_dir / "chunks.jsonl"),
+        visible_chunks_path=str(layout.harness_dir / "candidate_chunks.jsonl"),
         retrieved_chunks=[],
         budget=episode.budget,
         backend_name=backend.backend_name,
+        memory_mode=manifest.memory_mode,
     )
 
     if agent_command:
@@ -81,7 +121,8 @@ def run_agent_episode(
         ) = run_external_agent_command(
             context=context,
             command_template=agent_command,
-            run_root=layout.run_root,
+            input_dir=layout.input_dir,
+            output_dir=layout.output_dir,
         )
     else:
         agent = load_agent(
@@ -105,25 +146,29 @@ def run_agent_episode(
         context.retrieved_chunks = retrieved_chunks
         proposal = execute_patch_generation(agent, context)
         review = execute_review(agent, context, proposal)
+        _write_step_output(
+            layout,
+            episode=episode,
+            plan=plan,
+            ingestion_decision=ingestion_decision,
+            retrieval_decision=retrieval_decision,
+            retrieval_trace=retrieval_trace,
+            proposal=proposal,
+            review=review,
+            mutations=mutations,
+        )
 
-    _write_execution_artifacts(
-        layout.run_root,
-        agent_name=agent_name,
-        plan=plan,
-        ingestion_decision=ingestion_decision,
-        retrieval_decision=retrieval_decision,
-        retrieval_trace=retrieval_trace,
-        proposal=proposal,
-        review=review,
-        mutations=mutations,
-    )
-    return {"run_id": layout.run_id, "run_root": str(layout.run_root)}
+    return {
+        "run_id": timeline_layout.run_id,
+        "step_root": str(layout.step_root),
+        "output_dir": str(layout.output_dir),
+    }
 
 
-def _write_execution_artifacts(
-    run_root: Path,
+def _write_step_output(
+    layout: StepLayout,
     *,
-    agent_name: str,
+    episode: ProgrammingEpisodeSpec,
     plan: AgentPlan,
     ingestion_decision: IngestionDecision,
     retrieval_decision: RetrievalDecision,
@@ -132,19 +177,37 @@ def _write_execution_artifacts(
     review: ReviewResult,
     mutations: list[MutationRecord],
 ) -> None:
-    write_json(run_root / "agent_run.json", {"agent_name": agent_name})
-    write_json(run_root / "plan.json", plan.model_dump(mode="json"))
-    write_json(run_root / "ingestion_decision.json", ingestion_decision.model_dump(mode="json"))
-    write_json(run_root / "retrieval_decision.json", retrieval_decision.model_dump(mode="json"))
-    write_json(run_root / "retrieval_trace.json", retrieval_trace.model_dump(mode="json"))
-    (run_root / "patch.diff").write_text(proposal.patch_text, encoding="utf-8")
-    write_json(run_root / "patch_proposal.json", proposal.model_dump(mode="json"))
-    write_json(run_root / "citations.json", {"citations": proposal.citations_used})
-    write_json(run_root / "review.json", review.model_dump(mode="json"))
-    write_jsonl(run_root / "mutation_log.jsonl", [mutation.model_dump(mode="json") for mutation in mutations])
+    write_json(layout.output_dir / "plan.json", plan.model_dump(mode="json"))
+    write_json(
+        layout.output_dir / "ingestion_decision.json",
+        ingestion_decision.model_dump(mode="json"),
+    )
+    write_json(
+        layout.output_dir / "retrieval_decision.json",
+        retrieval_decision.model_dump(mode="json"),
+    )
+    write_json(layout.output_dir / "retrieval_trace.json", retrieval_trace.model_dump(mode="json"))
+    (layout.output_dir / "patch.diff").write_text(proposal.patch_text, encoding="utf-8")
+    write_json(layout.output_dir / "citations.json", {"citations": proposal.citations_used})
+    write_json(layout.output_dir / "review.json", review.model_dump(mode="json"))
+    write_jsonl(
+        layout.output_dir / "memory_mutations.jsonl",
+        [mutation.model_dump(mode="json") for mutation in mutations],
+    )
+    write_json(
+        layout.harness_dir / "patch_proposal.json",
+        proposal.model_dump(mode="json"),
+    )
+    write_json(
+        layout.harness_dir / "output_manifest.json",
+        {
+            "episode_id": episode.episode_id,
+            "output_dir": str(layout.output_dir),
+        },
+    )
 
 
-def _load_candidate_chunks(path: Path) -> list[Chunk]:
+def _load_chunks(path: Path) -> list[Chunk]:
     if not path.exists():
         return []
     return [Chunk.model_validate(item) for item in read_jsonl(path)]

@@ -1,50 +1,33 @@
 # Benchmark Spec
 
-## What an episode is
+## First-class objects
 
-An episode is a replayable unit of benchmark evaluation. It binds together:
+- `TemporalStateSpec`: immutable repository state, dependency snapshot, environment, and visible state docs
+- `DependencyEventSpec`: drift event linking `from_state` to `to_state`
+- `ProgrammingEpisodeSpec`: agent-facing transition task
+- `TimelineSpec`: ordered set of states and episodes for one repo
 
-- a pinned repository snapshot
-- a controlled dependency drift event
-- visible docs that may be ingested into external memory
-- hidden evaluation instructions and tests
-- scoring artifacts and expectations
+## What the agent sees
 
-Episodes are stored under `benchmark_data/episodes/` so benchmark data stays separate
-from the benchmark runtime and reference agents.
+At each step the agent can access only:
 
-## What is visible to the agent
-
-The agent can only observe:
-
-- the task prompt
+- the materialized workspace for `from_state`
+- the filtered docs staged under `input/docs/available/`
 - the visible failure signal
-- retrieved chunks from the visible-doc vector store
-- the materialized repository workspace
+- the current memory snapshot under `input/memory/`
+- the step metadata written to `input/*.json`
 
-## What is hidden
+## What stays hidden
 
-The following remain harness-only:
+- `hidden_eval/`
+- gold mutation artifacts
+- expected retrieval artifacts
+- any future state or event docs
 
-- hidden evaluation tests and manifests
-- scoring logic details beyond published metrics
-- mutation artifacts used for scoring unless explicitly exposed
+## Primary evaluation modes
 
-## Dependency-drift event definition
+- `persistent`: carry memory forward across steps
+- `reset`: clear memory before every step
 
-A dependency-drift event captures the change from one version of a dependency to
-another, along with supporting visible documents and metadata about expected risk.
-
-## Success criteria
-
-Success is measured with both raw and aggregate metrics:
-
-- patch application status
-- visible and hidden test outcomes
-- mutation-log precision, recall, and F1
-- retrieval freshness and stale retrieval rate
-- citation overlap with expected relevant docs
-- code churn and final weighted score
-
-Longitudinal aggregation can also summarize multiple runs with AUAC-like per-repo
-curves and regression-rate tracking.
+The benchmark reports both per-step metrics and timeline-level aggregates such as adaptation area,
+mean time to recover, stale retrieval rate, and drawdown.

@@ -1,45 +1,50 @@
 # Agent Interface
 
-Agents integrate through the `BaseAgent` protocol. The lifecycle is:
+Agents integrate through a filesystem bundle per step.
 
-1. `plan(context)` - produce a short plan
-2. `ingest(context)` - declare ingestion intent
-3. `retrieve(context)` - declare retrieval query/top-k behavior
-4. `generate_patch(context)` - emit a unified diff proposal plus citations
-5. `review(context, proposal)` - summarize the patch quality or limitations
+## Input bundle
 
-The benchmark core no longer bundles concrete baseline agents directly. Reference
-baselines now live in the separate `sdt_bench_baselines` package, while external
-teams can provide their own agent implementations.
+```text
+input/
+  manifest.json
+  episode.json
+  from_state.json
+  to_state.json
+  event.json
+  repo_spec.json
+  workspace/
+  docs/manifest.json
+  docs/available/
+  visible_failure/ci_failure.txt
+  memory/manifest.json
+  memory/chunks.jsonl
+```
 
-## Required inputs
+## Required output bundle
 
-- episode metadata
-- visible failure signal
-- retrieved chunks
-- workspace path
-- budget settings
+```text
+output/
+  plan.json
+  ingestion_decision.json
+  retrieval_decision.json
+  retrieval_trace.json
+  patch.diff
+  citations.json
+  memory_mutations.jsonl
+  review.json
+```
 
-## Required outputs
+Every file under `output/` is required. No-op behavior must still be encoded with valid empty
+payloads.
 
-- plan metadata
-- ingestion and retrieval decisions
-- patch proposal
-- citation list
-- review result
+## External command integration
 
-## Integration options
+Use:
 
-- Built-in baselines: `baseline:dummy`, `baseline:retrieval_baseline`, `baseline:static_rag`, `baseline:full_reindex`
-- Python factory: `--agent-factory module.path:callable`
-- External process: `--agent-command "python my_agent.py {context_json} {output_dir}"`
+```bash
+python -m sdt_bench.cli run-step <episode_dir> \
+  --agent external \
+  --agent-command "python my_agent.py {input_dir} {output_dir}"
+```
 
-When using `--agent-command`, the benchmark writes `agent_context.json` and expects
-artifact files such as `patch.diff`, `citations.json`, `review.json`, and optional
-`mutation_log.jsonl`, `plan.json`, `retrieval_decision.json`, and `retrieval_trace.json`.
-
-## Integration guidance
-
-Future Codex or external model adapters should remain thin. The benchmark harness
-owns state transitions, artifact writing, and evaluation. Adapters should focus on
-turning the constrained agent context into a patch proposal and review output.
+The harness also expands `{manifest_json}` and `{workspace}` for convenience.

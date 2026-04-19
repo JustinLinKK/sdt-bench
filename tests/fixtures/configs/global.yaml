@@ -1,4 +1,4 @@
-default_backend: qdrant
+default_backend: in_memory
 paths:
   runs_dir: runs
   workspaces_dir: .workspaces
@@ -11,4 +11,3 @@ runtime:
   install_timeout_seconds: 300
   test_timeout_seconds: 300
   query_joiner: "\n"
-

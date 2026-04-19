@@ -2,16 +2,32 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from sdt_bench.paths import PROJECT_ROOT
 from sdt_bench.utils.fs import ensure_dir
 from sdt_bench.utils.subprocess import run_command
 
 
 def clone_repo(source: str, destination: Path) -> None:
+    candidate = Path(source)
+    if not candidate.is_absolute():
+        project_relative = PROJECT_ROOT / candidate
+        if project_relative.exists():
+            candidate = project_relative
+    if candidate.exists():
+        ensure_dir(destination.parent)
+        if destination.exists():
+            raise FileExistsError(f"Destination already exists: {destination}")
+        from sdt_bench.utils.fs import copytree
+
+        copytree(candidate, destination)
+        return
     ensure_dir(destination.parent)
     run_command(["git", "clone", source, str(destination)])
 
 
 def checkout_commit(repo_dir: Path, commit: str) -> None:
+    if not (repo_dir / ".git").exists():
+        return
     run_command(["git", "checkout", "--force", commit], cwd=repo_dir)
 
 

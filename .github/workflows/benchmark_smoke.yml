@@ -3,22 +3,22 @@ name: Benchmark Smoke
 on:
   workflow_dispatch:
     inputs:
-      repo:
-        description: Repository key
+      timeline:
+        description: Timeline key
         required: true
-        default: requests
-      episode:
-        description: Episode directory name
+        default: toy
+      first_episode:
+        description: First episode directory name to validate
         required: true
         default: episode_0001
       agent:
         description: Agent name
         required: true
-        default: dummy
-      backend:
-        description: Vector backend
+        default: baseline:dummy
+      memory_mode:
+        description: Memory mode
         required: true
-        default: qdrant
+        default: persistent
 
 jobs:
   benchmark-smoke:
@@ -38,26 +38,27 @@ jobs:
 
       - name: Run benchmark episode
         run: |
-          EPISODE_PATH="benchmark_data/episodes/${{ inputs.repo }}/${{ inputs.episode }}"
-          uv run python -m sdt_bench.cli validate-episode "$EPISODE_PATH"
-          uv run python -m sdt_bench.cli materialize "$EPISODE_PATH"
-          uv run python -m sdt_bench.cli ingest-visible-docs "$EPISODE_PATH" --backend "${{ inputs.backend }}"
-          uv run python -m sdt_bench.cli run-agent "$EPISODE_PATH" --agent "${{ inputs.agent }}" --backend "${{ inputs.backend }}"
-          uv run python -m sdt_bench.cli evaluate "$EPISODE_PATH"
-          uv run python -m sdt_bench.cli report "$EPISODE_PATH"
+          EPISODE_PATH="benchmark_data/episodes/${{ inputs.timeline }}/${{ inputs.first_episode }}"
+          TIMELINE_PATH="benchmark_data/timelines/${{ inputs.timeline }}.yaml"
+          uv run python -m sdt_bench.cli validate-step "$EPISODE_PATH"
+          uv run python -m sdt_bench.cli run-timeline "$TIMELINE_PATH" --agent "${{ inputs.agent }}" --memory-mode "${{ inputs.memory_mode }}"
 
       - name: Collect artifacts
         run: |
-          SLUG="${{ inputs.repo }}__${{ inputs.episode }}"
-          RUN_ID="$(cat "runs/${SLUG}/last_run.txt")"
+          AGENT_SLUG="${{ inputs.agent }}"
+          AGENT_SLUG="${AGENT_SLUG//:/__}"
+          AGENT_SLUG="${AGENT_SLUG//\//__}"
+          RUN_ID="$(cat "runs/${{ inputs.timeline }}/${AGENT_SLUG}/last_run.txt")"
+          RUN_ROOT="runs/${{ inputs.timeline }}/${AGENT_SLUG}/${RUN_ID}"
           mkdir -p benchmark-artifacts
-          cp "runs/${SLUG}/${RUN_ID}/mutation_log.jsonl" benchmark-artifacts/
-          cp "runs/${SLUG}/${RUN_ID}/retrieval_trace.json" benchmark-artifacts/
-          cp "runs/${SLUG}/${RUN_ID}/patch.diff" benchmark-artifacts/
-          cp "runs/${SLUG}/${RUN_ID}/result.json" benchmark-artifacts/
-          cp "runs/${SLUG}/${RUN_ID}/report.md" benchmark-artifacts/
+          cp "${RUN_ROOT}/timeline_result.json" benchmark-artifacts/
+          cp "${RUN_ROOT}/timeline_report.md" benchmark-artifacts/
+          find "${RUN_ROOT}/steps" -path "*/harness/result.json" -exec cp --parents {} benchmark-artifacts/ \;
+          find "${RUN_ROOT}/steps" -path "*/harness/report.md" -exec cp --parents {} benchmark-artifacts/ \;
+          find "${RUN_ROOT}/steps" -path "*/output/patch.diff" -exec cp --parents {} benchmark-artifacts/ \;
+          find "${RUN_ROOT}/steps" -path "*/output/memory_mutations.jsonl" -exec cp --parents {} benchmark-artifacts/ \;
 
       - uses: actions/upload-artifact@v4
         with:
-          name: benchmark-smoke-${{ inputs.repo }}-${{ inputs.episode }}
+          name: benchmark-smoke-${{ inputs.timeline }}
           path: benchmark-artifacts

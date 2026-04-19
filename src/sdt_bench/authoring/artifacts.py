@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sdt_bench.knowledge.chunking import build_visible_doc_chunks
+from sdt_bench.knowledge.chunking import build_doc_chunks_from_directory
 from sdt_bench.knowledge.mutation_log import derive_mutation_records
 from sdt_bench.schemas import Chunk, EpisodeSpec
 from sdt_bench.utils.fs import write_yaml
@@ -17,14 +17,18 @@ def synthesize_episode_artifacts(
     old_visible_doc_root: Path | None = None,
     required_chunk_count: int = 2,
 ) -> dict[str, int]:
-    new_chunks = build_visible_doc_chunks(
-        episode_dir,
-        episode,
+    event_dir = _resolve_event_dir(episode_dir, episode)
+    visible_doc_paths = _resolve_visible_doc_paths(event_dir)
+    new_chunks = build_doc_chunks_from_directory(
+        event_dir,
+        visible_doc_paths,
         chunk_size=chunk_size,
         overlap=overlap,
+        version_tag=episode.to_state_id,
+        metadata={"episode_id": episode.episode_id, "repo_name": episode.repo_name},
     )
     old_chunks = _build_old_chunks(
-        episode_dir=episode_dir,
+        visible_doc_paths=visible_doc_paths,
         episode=episode,
         chunk_size=chunk_size,
         overlap=overlap,
@@ -41,7 +45,7 @@ def synthesize_episode_artifacts(
         for chunk in sorted(new_chunks, key=lambda item: (item.source_path, item.chunk_index))
     ][:required_chunk_count]
     write_yaml(
-        episode_dir / "artifacts" / "gold_mutations.yaml",
+        event_dir / "artifacts" / "gold_mutations.yaml",
         {
             "mutations": [
                 {
@@ -54,7 +58,7 @@ def synthesize_episode_artifacts(
         },
     )
     write_yaml(
-        episode_dir / "artifacts" / "expected_retrieval_chunks.yaml",
+        event_dir / "artifacts" / "expected_retrieval_chunks.yaml",
         {"required_chunk_ids": required_chunk_ids},
     )
     return {
@@ -65,7 +69,7 @@ def synthesize_episode_artifacts(
 
 def _build_old_chunks(
     *,
-    episode_dir: Path,
+    visible_doc_paths: list[str],
     episode: EpisodeSpec,
     chunk_size: int,
     overlap: int,
@@ -74,19 +78,30 @@ def _build_old_chunks(
     if old_visible_doc_root is None:
         return []
     translated_paths = []
-    for relative_path in episode.visible_doc_paths:
+    for relative_path in visible_doc_paths:
         candidate = old_visible_doc_root / Path(relative_path).name
         if candidate.exists():
             translated_paths.append(str(candidate.relative_to(old_visible_doc_root)).replace("\\", "/"))
     if not translated_paths:
         return []
-
-    temp_episode = episode.model_copy(deep=True)
-    temp_episode.visible_doc_paths = translated_paths
-    return build_visible_doc_chunks(
+    return build_doc_chunks_from_directory(
         old_visible_doc_root,
-        temp_episode,
+        translated_paths,
         chunk_size=chunk_size,
         overlap=overlap,
-        visible_doc_paths=translated_paths,
+        version_tag=episode.from_state_id,
+        metadata={"episode_id": episode.episode_id, "repo_name": episode.repo_name},
     )
+
+
+def _resolve_event_dir(episode_dir: Path, episode: EpisodeSpec) -> Path:
+    benchmark_root = episode_dir.parents[2]
+    return benchmark_root / "events" / episode.repo_name / episode.event_id
+
+
+def _resolve_visible_doc_paths(event_dir: Path) -> list[str]:
+    event_yaml = event_dir / "event.yaml"
+    from sdt_bench.utils.fs import read_yaml
+
+    payload = read_yaml(event_yaml)
+    return [item.replace("\\", "/") for item in payload.get("visible_doc_paths", [])]

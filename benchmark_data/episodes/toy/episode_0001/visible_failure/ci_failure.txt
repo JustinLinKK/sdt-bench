@@ -1,0 +1,2 @@
+CI reports adapter instability after the dependency drift event. Preserve the public greeting behavior.
+

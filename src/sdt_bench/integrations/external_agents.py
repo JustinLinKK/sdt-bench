@@ -11,66 +11,17 @@ from sdt_bench.schemas import (
     RetrievalDecision,
     RetrievalTrace,
     ReviewResult,
+    StepOutputManifest,
 )
-from sdt_bench.utils.fs import ensure_dir, read_json, read_jsonl, write_json
+from sdt_bench.utils.fs import read_json, read_jsonl
 from sdt_bench.utils.subprocess import run_command
-from sdt_bench.utils.time import utc_timestamp
 
 
 def run_external_agent_command(
     *,
     context: AgentContext,
     command_template: str,
-    run_root: Path,
-) -> tuple[
-    AgentPlan,
-    IngestionDecision,
-    RetrievalDecision,
-    RetrievalTrace,
-    PatchProposal,
-    ReviewResult,
-    list[MutationRecord],
-]:
-    output_dir = ensure_dir(run_root / "external_agent_output")
-    context_path = export_agent_context(context=context, run_root=run_root)
-    command = command_template.format(
-        context_json=str(context_path),
-        output_dir=str(output_dir),
-        run_dir=str(run_root),
-        workspace=context.workspace,
-    )
-    run_command(command, cwd=Path(context.workspace), shell=True)
-    return import_external_agent_output(
-        context=context,
-        run_root=run_root,
-        output_dir=output_dir,
-    )
-
-
-def export_agent_context(*, context: AgentContext, run_root: Path) -> Path:
-    context_path = run_root / "agent_context.json"
-    write_json(
-        context_path,
-        {
-            "episode": context.episode.model_dump(mode="json"),
-            "repo_spec": context.repo_spec.model_dump(mode="json"),
-            "workspace": context.workspace,
-            "run_dir": context.run_dir,
-            "task_prompt": context.task_prompt,
-            "visible_failure_signal": context.visible_failure_signal,
-            "available_visible_doc_paths": context.available_visible_doc_paths,
-            "visible_chunks_path": context.visible_chunks_path,
-            "backend_name": context.backend_name,
-            "budget": context.budget.model_dump(mode="json"),
-        },
-    )
-    return context_path
-
-
-def import_external_agent_output(
-    *,
-    context: AgentContext,
-    run_root: Path,
+    input_dir: Path,
     output_dir: Path,
 ) -> tuple[
     AgentPlan,
@@ -81,55 +32,74 @@ def import_external_agent_output(
     ReviewResult,
     list[MutationRecord],
 ]:
-    plan = _load_optional_model(
-        output_dir / "plan.json",
-        AgentPlan,
-        {"summary": "External agent did not provide a plan.", "steps": []},
+    command = command_template.format(
+        input_dir=str(input_dir),
+        output_dir=str(output_dir),
+        manifest_json=str(input_dir / "manifest.json"),
+        workspace=context.workspace,
     )
-    ingestion = _load_optional_model(
-        output_dir / "ingestion_decision.json",
-        IngestionDecision,
-        {"strategy": "none", "ingest_visible_docs": False, "reason": "No external ingestion decision provided."},
+    run_command(command, cwd=Path(context.workspace), shell=True)
+    return import_external_agent_output(context=context, output_dir=output_dir)
+
+
+def import_external_agent_output(
+    *,
+    context: AgentContext,
+    output_dir: Path,
+) -> tuple[
+    AgentPlan,
+    IngestionDecision,
+    RetrievalDecision,
+    RetrievalTrace,
+    PatchProposal,
+    ReviewResult,
+    list[MutationRecord],
+]:
+    manifest = StepOutputManifest(
+        episode_id=context.episode.episode_id,
+        plan_path=str(output_dir / "plan.json"),
+        ingestion_decision_path=str(output_dir / "ingestion_decision.json"),
+        retrieval_decision_path=str(output_dir / "retrieval_decision.json"),
+        retrieval_trace_path=str(output_dir / "retrieval_trace.json"),
+        patch_path=str(output_dir / "patch.diff"),
+        citations_path=str(output_dir / "citations.json"),
+        memory_mutations_path=str(output_dir / "memory_mutations.jsonl"),
+        review_path=str(output_dir / "review.json"),
     )
-    retrieval_decision = _load_optional_model(
-        output_dir / "retrieval_decision.json",
-        RetrievalDecision,
-        {"query": "", "top_k": 0, "reason": "No external retrieval decision provided."},
+
+    required_paths = [
+        Path(manifest.plan_path),
+        Path(manifest.ingestion_decision_path),
+        Path(manifest.retrieval_decision_path),
+        Path(manifest.retrieval_trace_path),
+        Path(manifest.patch_path),
+        Path(manifest.citations_path),
+        Path(manifest.memory_mutations_path),
+        Path(manifest.review_path),
+    ]
+    missing = [str(path) for path in required_paths if not path.exists()]
+    if missing:
+        raise FileNotFoundError(
+            "External agent output is incomplete. Missing required files: "
+            + ", ".join(missing)
+        )
+
+    plan = AgentPlan.model_validate(read_json(Path(manifest.plan_path)))
+    ingestion = IngestionDecision.model_validate(read_json(Path(manifest.ingestion_decision_path)))
+    retrieval_decision = RetrievalDecision.model_validate(
+        read_json(Path(manifest.retrieval_decision_path))
     )
-    retrieval_trace = _load_optional_model(
-        output_dir / "retrieval_trace.json",
-        RetrievalTrace,
-        {
-            "episode_id": context.episode.episode_id,
-            "query": retrieval_decision.query,
-            "retrieved_chunk_ids": [],
-            "retrieved_document_ids": [],
-            "scores": [],
-            "freshness_labels": [],
-            "timestamp": utc_timestamp(),
-        },
-    )
-    patch_text = (output_dir / "patch.diff").read_text(encoding="utf-8") if (output_dir / "patch.diff").exists() else ""
-    citations_payload = read_json(output_dir / "citations.json") if (output_dir / "citations.json").exists() else {"citations": []}
+    retrieval_trace = RetrievalTrace.model_validate(read_json(Path(manifest.retrieval_trace_path)))
+    citations_payload = read_json(Path(manifest.citations_path))
     proposal = PatchProposal(
         episode_id=context.episode.episode_id,
-        patch_text=patch_text,
+        patch_text=Path(manifest.patch_path).read_text(encoding="utf-8"),
         citations_used=citations_payload.get("citations", []),
         summary="Imported from external agent output.",
     )
-    review = _load_optional_model(
-        output_dir / "review.json",
-        ReviewResult,
-        {"summary": "External agent did not provide a review.", "concerns": []},
-    )
+    review = ReviewResult.model_validate(read_json(Path(manifest.review_path)))
     mutations = [
         MutationRecord.model_validate(item)
-        for item in read_jsonl(output_dir / "mutation_log.jsonl")
+        for item in read_jsonl(Path(manifest.memory_mutations_path))
     ]
     return plan, ingestion, retrieval_decision, retrieval_trace, proposal, review, mutations
-
-
-def _load_optional_model(path: Path, model_type, default_payload):
-    if not path.exists():
-        return model_type.model_validate(default_payload)
-    return model_type.model_validate(read_json(path))

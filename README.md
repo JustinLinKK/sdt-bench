@@ -1,52 +1,38 @@
 # sdt-bench
 
-`sdt-bench` is a research-grade scaffold for benchmarking continual-learning coding
-agents under dependency version drift. It focuses on replayable episodes, explicit
-vector database mutation logs, clean agent interfaces, and auditable evaluation.
+`sdt-bench` is a timeline-first benchmark scaffold for coding agents under dependency drift.
+Instead of treating each task as an isolated issue, it models software maintenance as a temporal
+backtest: each step exposes only the repository, docs, failure signal, and external memory that
+would have been visible at that simulated time.
 
-## Motivation
+## What Changed
 
-Modern coding agents often need fresh dependency knowledge after a repository has
-already been frozen. `sdt-bench` models that lifecycle directly:
+The benchmark now centers on four immutable dataset objects:
 
-1. freeze a repo at `t0`
-2. introduce a dependency upgrade event at `t1`
-3. reveal new external knowledge through visible docs
-4. ingest those docs into an external memory backend
-5. retrieve fresh knowledge, patch the codebase, and evaluate the outcome
+- `TemporalStateSpec`
+- `DependencyEventSpec`
+- `ProgrammingEpisodeSpec`
+- `TimelineSpec`
 
-The benchmark tracks not only whether the code works after the upgrade, but also
-whether the external memory was updated correctly, whether the retrieved knowledge
-was fresh, and how much code churn was introduced.
+The scored unit is still a single transition episode, but the primary execution mode is now
+`run-timeline`, which rematerializes code at each step, carries forward memory only, and writes a
+standardized filesystem bundle for every agent interaction.
 
-## Current status
-
-This repository is the v0 scaffold. It includes:
-
-- full end-to-end support for one synthetic `requests` episode
-- a benchmark core package plus a separate bundled baseline-agent package
-- in-memory and embedded Qdrant vector DB backends
-- deterministic chunking and mutation logging
-- authoring commands for release harvesting, event generation, snapshot replay, artifact synthesis, and aggregation
-- CLI commands for validation, materialization, ingestion, execution, evaluation, and reporting
-- documentation, tests, Docker support, and CI workflows
-
-The `pytest` repo is partially scaffolded, while `sphinx`, `sqlfluff`, and
-`xarray` are placeholder configs for future expansion.
-
-## Repository layout
+## Repository Layout
 
 ```text
-.
-├── benchmark_data/     # benchmark episodes and authoring outputs
-├── configs/            # global and per-repo config
-├── docs/               # benchmark and implementation documentation
-├── src/sdt_bench/      # benchmark core package
-├── src/sdt_bench_baselines/ # bundled reference agents
-├── tests/              # unit and smoke integration tests
-├── .github/workflows/  # CI and benchmark smoke runs
-├── Dockerfile          # reproducible runtime image
-└── Makefile            # install/lint/test helpers
+benchmark_data/
+  manifest.yaml
+  timelines/
+  states/
+  events/
+  episodes/
+  fixtures/
+configs/
+docs/
+src/sdt_bench/
+src/sdt_bench_baselines/
+tests/
 ```
 
 ## Quickstart
@@ -54,47 +40,32 @@ The `pytest` repo is partially scaffolded, while `sphinx`, `sqlfluff`, and
 ```bash
 make install
 make test
-python -m sdt_bench.cli validate-episode benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli materialize benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli ingest-visible-docs benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli run-agent benchmark_data/episodes/requests/episode_0001 --agent baseline:dummy
-python -m sdt_bench.cli evaluate benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli report benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli validate-step benchmark_data/episodes/toy/episode_0001
+python -m sdt_bench.cli run-timeline benchmark_data/timelines/toy.yaml --agent baseline:dummy
+python -m sdt_bench.cli report-timeline benchmark_data/timelines/toy.yaml --agent baseline:dummy
 ```
 
-For the fast local smoke test path, run:
+The committed `toy` timeline is fully offline and is the default smoke path. A scaffolded
+`requests` timeline is included to show the real-repo layout expected by the benchmark.
 
-```bash
-make smoke
+## Agent Contract
+
+Each step writes a bundle under:
+
+```text
+runs/<timeline_id>/<agent_slug>/<run_id>/steps/<index>__<episode_id>/
+  input/
+  output/
+  harness/
 ```
 
-## Authoring
+The harness owns `input/` and `harness/`. Agents are expected to read only `input/` and write all
+required artifacts under `output/`.
 
-`sdt-bench` now includes first-pass authoring utilities for scaling beyond hand-authored episodes:
+## Included Tracks
 
-```bash
-sdt-bench author-harvest-releases --repo-name requests
-sdt-bench author-build-events --repo-name requests
-sdt-bench author-materialize-snapshot --repo-name requests --ref refs/tags/v2.31.0
-sdt-bench author-synthesize-artifacts benchmark_data/episodes/requests/episode_0001
-sdt-bench aggregate-results --results-root runs
-```
-
-## Using your own agent framework
-
-The benchmark core is separate from the bundled baselines. You can:
-
-- use a bundled reference agent such as `baseline:dummy`, `baseline:retrieval_baseline`, `baseline:static_rag`, or `baseline:full_reindex`
-- load a Python agent factory with `--agent-factory module.path:callable`
-- run an external framework with `--agent-command` and exchange files through `agent_context.json` and `external_agent_output/`
-
-## Supported repos
-
-- `requests` - full v0 example
-- `pytest` - partial scaffold
-- `sphinx` - placeholder
-- `sqlfluff` - placeholder
-- `xarray` - placeholder
+- `toy`: fully offline synthetic timeline used by tests and CI smoke runs
+- `requests`: scaffolded real-repository timeline showing the intended production layout
 
 ## Documentation
 
@@ -104,15 +75,5 @@ The benchmark core is separate from the bundled baselines. You can:
 - [docs/benchmark_spec.md](docs/benchmark_spec.md)
 - [docs/episode_schema.md](docs/episode_schema.md)
 - [docs/agent_interface.md](docs/agent_interface.md)
-- [docs/authoring.md](docs/authoring.md)
 - [docs/vector_db_protocol.md](docs/vector_db_protocol.md)
 - [docs/evaluation.md](docs/evaluation.md)
-- [docs/repo_onboarding.md](docs/repo_onboarding.md)
-- [docs/development.md](docs/development.md)
-
-## Limitations of v0
-
-- only one full benchmark episode is provided out of the box
-- the bundled baselines are intentionally simple reference agents, not competitive systems
-- hidden evaluation for the bundled `requests` episode is intentionally narrow and synthetic
-- Docker support is provided for reproducibility, but the default local flow runs on the host for speed

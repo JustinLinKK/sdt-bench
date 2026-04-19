@@ -20,70 +20,70 @@ from sdt_bench.authoring import (
     write_release_records,
 )
 from sdt_bench.benchmark import (
-    load_episode_spec,
     load_global_config,
     load_repo_spec,
-    materialize_episode,
-    validate_episode,
+    load_step_bundle,
+    load_timeline_spec,
+    materialize_step,
+    validate_step,
 )
-from sdt_bench.env.workspace import resolve_existing_run
-from sdt_bench.evaluation import evaluate_episode, render_report
-from sdt_bench.execution import run_agent_episode
-from sdt_bench.knowledge import ingest_visible_docs, summarize_mutations, write_mutation_log
+from sdt_bench.env import create_timeline_run_layout, resolve_timeline_run, set_last_run
+from sdt_bench.evaluation import (
+    evaluate_step,
+    evaluate_timeline,
+    render_timeline_report,
+)
+from sdt_bench.execution import run_agent_step
+from sdt_bench.knowledge import apply_memory_mutations
 from sdt_bench.paths import get_benchmark_data_dir
-from sdt_bench.utils import console, write_json, write_jsonl
+from sdt_bench.schemas import Chunk, MutationRecord, TimelineEvaluationResult
+from sdt_bench.utils import console
+from sdt_bench.utils.fs import read_json, read_jsonl
 
-app = typer.Typer(add_completion=False, help="Continuous-learning benchmark scaffold CLI.")
+app = typer.Typer(add_completion=False, help="Temporal dependency-drift benchmark CLI.")
 
 
-@app.command("validate-episode")
-def validate_episode_command(episode_path: Path) -> None:
-    episode_dir, episode = load_episode_spec(episode_path)
-    repo_spec = load_repo_spec(episode.repo_name)
-    summary = validate_episode(episode_dir, episode, repo_spec)
+@app.command("validate-step")
+def validate_step_command(episode_path: Path) -> None:
+    bundle = load_step_bundle(episode_path)
+    repo_spec = load_repo_spec(bundle.episode.repo_name)
+    summary = validate_step(bundle, repo_spec)
     console.print(summary)
 
 
-@app.command("materialize")
-def materialize_command(episode_path: Path) -> None:
-    episode_dir, episode = load_episode_spec(episode_path)
-    repo_spec = load_repo_spec(episode.repo_name)
+@app.command("materialize-step")
+def materialize_step_command(
+    episode_path: Path,
+    agent: str = typer.Option(..., "--agent"),
+    run_id: str | None = typer.Option(default=None),
+    memory_mode: str = typer.Option("persistent", "--memory-mode"),
+) -> None:
+    bundle = load_step_bundle(episode_path)
+    repo_spec = load_repo_spec(bundle.episode.repo_name)
     global_config = load_global_config()
-    result = materialize_episode(
+    timeline_layout = create_timeline_run_layout(
+        global_config,
+        timeline_id=bundle.timeline.timeline_id,
+        agent_name=agent,
+        run_id=run_id,
+    )
+    set_last_run(timeline_layout)
+    step_index = bundle.timeline.episode_ids.index(bundle.episode.episode_id)
+    result = materialize_step(
         global_config=global_config,
-        episode_dir=episode_dir,
-        episode=episode,
+        bundle=bundle,
         repo_spec=repo_spec,
+        timeline_layout=timeline_layout,
+        step_index=step_index,
+        agent_name=agent,
+        memory_mode=memory_mode,
+        memory_chunks=[],
     )
     console.print(result)
 
 
-@app.command("ingest-visible-docs")
-def ingest_visible_docs_command(
-    episode_path: Path,
-    run_id: str | None = typer.Option(default=None),
-    backend: str | None = typer.Option(default=None),
-) -> None:
-    episode_dir, episode = load_episode_spec(episode_path)
-    global_config = load_global_config()
-    layout = resolve_existing_run(global_config, episode, run_id)
-    del backend
-    chunks, mutations, snapshot = ingest_visible_docs(
-        episode_dir=episode_dir,
-        episode=episode,
-        chunk_size=global_config["runtime"]["chunk_size"],
-        overlap=global_config["runtime"]["chunk_overlap"],
-    )
-    write_jsonl(
-        layout.run_root / "chunks.jsonl", [chunk.model_dump(mode="json") for chunk in chunks]
-    )
-    write_mutation_log(layout.run_root / "candidate_mutation_log.jsonl", mutations)
-    write_json(layout.run_root / "candidate_db_snapshot.json", snapshot.model_dump(mode="json"))
-    console.print(summarize_mutations(mutations))
-
-
-@app.command("run-agent")
-def run_agent_command(
+@app.command("run-step")
+def run_step_command(
     episode_path: Path,
     agent: str = typer.Option(..., "--agent"),
     run_id: str | None = typer.Option(default=None),
@@ -92,13 +92,25 @@ def run_agent_command(
     agent_factory: str | None = typer.Option(None, "--agent-factory"),
     agent_command: str | None = typer.Option(None, "--agent-command"),
 ) -> None:
-    episode_dir, episode = load_episode_spec(episode_path)
-    repo_spec = load_repo_spec(episode.repo_name)
-    result = run_agent_episode(
-        episode_dir=episode_dir,
-        episode=episode,
-        repo_spec=repo_spec,
+    bundle = load_step_bundle(episode_path)
+    repo_spec = load_repo_spec(bundle.episode.repo_name)
+    global_config = load_global_config()
+    timeline_layout = resolve_timeline_run(
+        global_config,
+        timeline_id=bundle.timeline.timeline_id,
+        agent_name=agent,
         run_id=run_id,
+    )
+    result = run_agent_step(
+        global_config=global_config,
+        timeline=bundle.timeline,
+        episode=bundle.episode,
+        event=bundle.event,
+        from_state=bundle.from_state,
+        to_state=bundle.to_state,
+        repo_spec=repo_spec,
+        timeline_layout=timeline_layout,
+        step_index=bundle.timeline.episode_ids.index(bundle.episode.episode_id),
         agent_name=agent,
         adapter_name=adapter,
         agent_factory=agent_factory,
@@ -108,35 +120,144 @@ def run_agent_command(
     console.print(result)
 
 
-@app.command("evaluate")
-def evaluate_command(episode_path: Path, run_id: str | None = typer.Option(default=None)) -> None:
-    episode_dir, episode = load_episode_spec(episode_path)
-    repo_spec = load_repo_spec(episode.repo_name)
-    result = evaluate_episode(
-        episode_dir=episode_dir,
-        episode=episode,
-        repo_spec=repo_spec,
+@app.command("evaluate-step")
+def evaluate_step_command(
+    episode_path: Path,
+    agent: str = typer.Option(..., "--agent"),
+    run_id: str | None = typer.Option(default=None),
+) -> None:
+    bundle = load_step_bundle(episode_path)
+    repo_spec = load_repo_spec(bundle.episode.repo_name)
+    global_config = load_global_config()
+    timeline_layout = resolve_timeline_run(
+        global_config,
+        timeline_id=bundle.timeline.timeline_id,
+        agent_name=agent,
         run_id=run_id,
+    )
+    result = evaluate_step(
+        global_config=global_config,
+        bundle=bundle,
+        repo_spec=repo_spec,
+        timeline_layout=timeline_layout,
+        step_index=bundle.timeline.episode_ids.index(bundle.episode.episode_id),
+        agent_name=agent,
     )
     console.print(result)
 
 
-@app.command("report")
-def report_command(episode_path: Path, run_id: str | None = typer.Option(default=None)) -> None:
-    episode_dir, episode = load_episode_spec(episode_path)
+@app.command("run-timeline")
+def run_timeline_command(
+    timeline_path: Path,
+    agent: str = typer.Option(..., "--agent"),
+    run_id: str | None = typer.Option(default=None),
+    memory_mode: str = typer.Option("persistent", "--memory-mode"),
+    backend: str | None = typer.Option(default=None),
+    adapter: str = typer.Option("noop", "--adapter"),
+    agent_factory: str | None = typer.Option(None, "--agent-factory"),
+    agent_command: str | None = typer.Option(None, "--agent-command"),
+) -> None:
+    _, timeline = load_timeline_spec(timeline_path)
+    repo_spec = load_repo_spec(timeline.repo_name)
     global_config = load_global_config()
-    layout = resolve_existing_run(global_config, episode, run_id)
-    result_path = layout.run_root / "result.json"
-    if not result_path.exists():
-        raise typer.BadParameter("Run evaluate before report.")
-    from sdt_bench.schemas.result import EvaluationResult
-    from sdt_bench.utils.fs import read_json
+    timeline_layout = create_timeline_run_layout(
+        global_config,
+        timeline_id=timeline.timeline_id,
+        agent_name=agent,
+        run_id=run_id,
+    )
+    set_last_run(timeline_layout)
 
-    result = EvaluationResult.model_validate(read_json(result_path))
-    report = render_report(result)
-    report_path = layout.run_root / "report.md"
+    memory_chunks: list[Chunk] = []
+    benchmark_root = get_benchmark_data_dir()
+    for step_index, episode_id in enumerate(timeline.episode_ids):
+        episode_dir = benchmark_root / "episodes" / timeline.repo_name / episode_id
+        bundle = load_step_bundle(episode_dir)
+        materialize_step(
+            global_config=global_config,
+            bundle=bundle,
+            repo_spec=repo_spec,
+            timeline_layout=timeline_layout,
+            step_index=step_index,
+            agent_name=agent,
+            memory_mode=memory_mode,
+            memory_chunks=memory_chunks if memory_mode == "persistent" else [],
+        )
+        run_agent_step(
+            global_config=global_config,
+            timeline=bundle.timeline,
+            episode=bundle.episode,
+            event=bundle.event,
+            from_state=bundle.from_state,
+            to_state=bundle.to_state,
+            repo_spec=repo_spec,
+            timeline_layout=timeline_layout,
+            step_index=step_index,
+            agent_name=agent,
+            adapter_name=adapter,
+            agent_factory=agent_factory,
+            agent_command=agent_command,
+            backend_name=backend,
+        )
+        evaluate_step(
+            global_config=global_config,
+            bundle=bundle,
+            repo_spec=repo_spec,
+            timeline_layout=timeline_layout,
+            step_index=step_index,
+            agent_name=agent,
+        )
+
+        if memory_mode == "persistent":
+            step_layout = timeline_layout.steps_root / f"{step_index:03d}__{episode_id}"
+            candidate_chunks = [
+                Chunk.model_validate(item)
+                for item in read_jsonl(step_layout / "harness" / "candidate_chunks.jsonl")
+            ]
+            mutations = [
+                MutationRecord.model_validate(item)
+                for item in read_jsonl(step_layout / "output" / "memory_mutations.jsonl")
+            ]
+            memory_chunks = apply_memory_mutations(
+                current_chunks=memory_chunks,
+                candidate_chunks=candidate_chunks,
+                mutations=mutations,
+            )
+
+    timeline_result = evaluate_timeline(
+        timeline=timeline,
+        repo_spec=repo_spec,
+        timeline_layout=timeline_layout,
+        agent_name=agent,
+        memory_mode=memory_mode,
+    )
+    report_path = timeline_layout.run_root / "timeline_report.md"
+    report_path.write_text(render_timeline_report(timeline_result), encoding="utf-8")
+    console.print({"run_id": timeline_layout.run_id, "report_path": str(report_path)})
+
+
+@app.command("report-timeline")
+def report_timeline_command(
+    timeline_path: Path,
+    agent: str = typer.Option(..., "--agent"),
+    run_id: str | None = typer.Option(default=None),
+) -> None:
+    _, timeline = load_timeline_spec(timeline_path)
+    global_config = load_global_config()
+    timeline_layout = resolve_timeline_run(
+        global_config,
+        timeline_id=timeline.timeline_id,
+        agent_name=agent,
+        run_id=run_id,
+    )
+    result_path = timeline_layout.run_root / "timeline_result.json"
+    if not result_path.exists():
+        raise typer.BadParameter("Run run-timeline before report-timeline.")
+    result = TimelineEvaluationResult.model_validate(read_json(result_path))
+    report = render_timeline_report(result)
+    report_path = timeline_layout.run_root / "timeline_report.md"
     report_path.write_text(report, encoding="utf-8")
-    console.print({"run_id": layout.run_id, "report_path": str(report_path)})
+    console.print({"run_id": timeline_layout.run_id, "report_path": str(report_path)})
 
 
 @app.command("author-harvest-releases")
@@ -192,11 +313,11 @@ def author_synthesize_artifacts_command(
     old_visible_doc_root: Annotated[Path | None, typer.Option("--old-visible-doc-root")] = None,
     required_chunk_count: Annotated[int, typer.Option("--required-chunk-count")] = 2,
 ) -> None:
-    episode_dir, episode = load_episode_spec(episode_path)
+    bundle = load_step_bundle(episode_path)
     global_config = load_global_config()
     summary = synthesize_episode_artifacts(
-        episode_dir=episode_dir,
-        episode=episode,
+        episode_dir=bundle.episode_dir,
+        episode=bundle.episode,
         chunk_size=global_config["runtime"]["chunk_size"],
         overlap=global_config["runtime"]["chunk_overlap"],
         old_visible_doc_root=old_visible_doc_root,

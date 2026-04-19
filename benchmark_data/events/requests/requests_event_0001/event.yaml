@@ -1,0 +1,21 @@
+event_id: requests_event_0001
+from_state_id: requests_2023_05
+to_state_id: requests_2023_11
+dependency_name: urllib3
+ecosystem: pypi
+old_version: "1.26.18"
+new_version: "2.0.7"
+event_type: synthetic
+summary: Scaffolded requests compatibility event for the timeline-first track.
+available_at: "2023-11-01T00:00:00+00:00"
+breaking_change_expected: true
+affected_capability: import_and_request_preparation
+visible_doc_paths:
+  - visible_docs/changelog.md
+  - visible_docs/migration_guide.md
+gold_mutation_paths:
+  - artifacts/gold_mutations.yaml
+expected_retrieval_path: artifacts/expected_retrieval_chunks.yaml
+metadata:
+  track: scaffold
+

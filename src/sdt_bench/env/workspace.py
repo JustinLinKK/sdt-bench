@@ -4,65 +4,117 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from sdt_bench.paths import PROJECT_ROOT
-from sdt_bench.schemas.episode import EpisodeSpec
 from sdt_bench.utils.fs import ensure_dir
 from sdt_bench.utils.time import run_id as build_run_id
 
 
 @dataclass(slots=True)
-class RunLayout:
-    episode_slug: str
+class TimelineRunLayout:
+    timeline_id: str
+    agent_name: str
+    agent_slug: str
     run_id: str
-    episode_root: Path
+    agent_root: Path
     run_root: Path
+    steps_root: Path
+
+
+@dataclass(slots=True)
+class StepLayout:
+    step_slug: str
+    step_root: Path
+    input_dir: Path
+    output_dir: Path
+    harness_dir: Path
     workspace_dir: Path
-    backend_dir: Path
+    docs_dir: Path
+    docs_available_dir: Path
+    visible_failure_dir: Path
+    memory_dir: Path
 
 
-def episode_slug(episode: EpisodeSpec) -> str:
-    return f"{episode.repo_name}__{episode.episode_id}"
+def normalize_agent_name(agent_name: str) -> str:
+    return agent_name.replace(":", "__").replace("/", "__")
 
 
-def create_run_layout(global_config: dict, episode: EpisodeSpec) -> RunLayout:
-    slug = episode_slug(episode)
-    current_run_id = build_run_id()
-    runs_root = ensure_dir(PROJECT_ROOT / global_config["paths"]["runs_dir"] / slug)
-    run_root = ensure_dir(runs_root / current_run_id)
-    workspace_root = ensure_dir(PROJECT_ROOT / global_config["paths"]["workspaces_dir"] / slug)
-    backend_root = ensure_dir(PROJECT_ROOT / global_config["paths"]["qdrant_dir"] / slug)
-    return RunLayout(
-        episode_slug=slug,
-        run_id=current_run_id,
-        episode_root=runs_root,
+def create_timeline_run_layout(
+    global_config: dict,
+    *,
+    timeline_id: str,
+    agent_name: str,
+    run_id: str | None = None,
+) -> TimelineRunLayout:
+    agent_slug = normalize_agent_name(agent_name)
+    agent_root = ensure_dir(
+        PROJECT_ROOT / global_config["paths"]["runs_dir"] / timeline_id / agent_slug
+    )
+    selected_run_id = run_id or build_run_id()
+    run_root = ensure_dir(agent_root / selected_run_id)
+    steps_root = ensure_dir(run_root / "steps")
+    return TimelineRunLayout(
+        timeline_id=timeline_id,
+        agent_name=agent_name,
+        agent_slug=agent_slug,
+        run_id=selected_run_id,
+        agent_root=agent_root,
         run_root=run_root,
-        workspace_dir=workspace_root / current_run_id,
-        backend_dir=backend_root / current_run_id,
+        steps_root=steps_root,
     )
 
 
-def set_last_run(layout: RunLayout) -> None:
-    ensure_dir(layout.episode_root)
-    (layout.episode_root / "last_run.txt").write_text(layout.run_id, encoding="utf-8")
-
-
-def resolve_existing_run(
-    global_config: dict, episode: EpisodeSpec, run_id: str | None
-) -> RunLayout:
-    slug = episode_slug(episode)
-    episode_root = PROJECT_ROOT / global_config["paths"]["runs_dir"] / slug
+def resolve_timeline_run(
+    global_config: dict,
+    *,
+    timeline_id: str,
+    agent_name: str,
+    run_id: str | None = None,
+) -> TimelineRunLayout:
+    agent_slug = normalize_agent_name(agent_name)
+    agent_root = PROJECT_ROOT / global_config["paths"]["runs_dir"] / timeline_id / agent_slug
     if run_id is None:
-        last_run_path = episode_root / "last_run.txt"
+        last_run_path = agent_root / "last_run.txt"
         if not last_run_path.exists():
-            raise FileNotFoundError("No run ID available. Run materialize first or pass --run-id.")
+            raise FileNotFoundError("No run ID available. Run materialize-step or run-timeline first.")
         run_id = last_run_path.read_text(encoding="utf-8").strip()
-    run_root = episode_root / run_id
+    run_root = agent_root / run_id
     if not run_root.exists():
         raise FileNotFoundError(f"Run directory does not exist: {run_root}")
-    return RunLayout(
-        episode_slug=slug,
+    return TimelineRunLayout(
+        timeline_id=timeline_id,
+        agent_name=agent_name,
+        agent_slug=agent_slug,
         run_id=run_id,
-        episode_root=episode_root,
+        agent_root=agent_root,
         run_root=run_root,
-        workspace_dir=PROJECT_ROOT / global_config["paths"]["workspaces_dir"] / slug / run_id,
-        backend_dir=PROJECT_ROOT / global_config["paths"]["qdrant_dir"] / slug / run_id,
+        steps_root=run_root / "steps",
     )
+
+
+def create_step_layout(layout: TimelineRunLayout, *, step_index: int, episode_id: str) -> StepLayout:
+    step_slug = f"{step_index:03d}__{episode_id}"
+    step_root = ensure_dir(layout.steps_root / step_slug)
+    input_dir = ensure_dir(step_root / "input")
+    output_dir = ensure_dir(step_root / "output")
+    harness_dir = ensure_dir(step_root / "harness")
+    docs_dir = ensure_dir(input_dir / "docs")
+    docs_available_dir = ensure_dir(docs_dir / "available")
+    visible_failure_dir = ensure_dir(input_dir / "visible_failure")
+    memory_dir = ensure_dir(input_dir / "memory")
+    workspace_dir = input_dir / "workspace"
+    return StepLayout(
+        step_slug=step_slug,
+        step_root=step_root,
+        input_dir=input_dir,
+        output_dir=output_dir,
+        harness_dir=harness_dir,
+        workspace_dir=workspace_dir,
+        docs_dir=docs_dir,
+        docs_available_dir=docs_available_dir,
+        visible_failure_dir=visible_failure_dir,
+        memory_dir=memory_dir,
+    )
+
+
+def set_last_run(layout: TimelineRunLayout) -> None:
+    ensure_dir(layout.agent_root)
+    (layout.agent_root / "last_run.txt").write_text(layout.run_id, encoding="utf-8")

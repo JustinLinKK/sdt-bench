@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 
 from sdt_bench.schemas.metrics import EvaluationMetrics
+from sdt_bench.schemas.result import StepEvaluationResult, TimelineAggregateMetrics
 from sdt_bench.schemas.retrieval import MutationRecord
 
 
@@ -104,3 +105,43 @@ def mutation_summary(actual: list[MutationRecord]) -> dict[str, int]:
         "tombstone": counts.get("tombstone", 0),
         "total": len(actual),
     }
+
+
+def aggregate_timeline_metrics(results: list[StepEvaluationResult]) -> TimelineAggregateMetrics:
+    if not results:
+        return TimelineAggregateMetrics()
+
+    hidden_pass_values = [1.0 if item.metrics.hidden_tests_passed else 0.0 for item in results]
+    final_scores = [item.metrics.final_score for item in results]
+    stale_rates = [item.metrics.stale_chunk_fraction for item in results]
+
+    running_peak = 0.0
+    max_drawdown = 0.0
+    for score in final_scores:
+        running_peak = max(running_peak, score)
+        max_drawdown = max(max_drawdown, running_peak - score)
+
+    recovery_windows: list[int] = []
+    current_streak = 0
+    for passed in hidden_pass_values:
+        if passed:
+            if current_streak:
+                recovery_windows.append(current_streak)
+                current_streak = 0
+        else:
+            current_streak += 1
+    if current_streak:
+        recovery_windows.append(current_streak)
+
+    step_count = len(results)
+    return TimelineAggregateMetrics(
+        step_count=step_count,
+        hidden_pass_rate=sum(hidden_pass_values) / step_count,
+        cumulative_success=sum(hidden_pass_values) / step_count,
+        adaptation_area=sum(final_scores) / step_count,
+        average_stale_retrieval_rate=sum(stale_rates) / step_count,
+        mean_time_to_recover=(
+            sum(recovery_windows) / len(recovery_windows) if recovery_windows else 0.0
+        ),
+        max_drawdown=max_drawdown,
+    )

@@ -1,64 +1,40 @@
 # Quickstart
 
-## Local install
+## Install
 
 ```bash
 make install
 ```
 
-This uses `uv` and installs the project plus development dependencies.
-
-## Local smoke path
+## Validate One Step
 
 ```bash
-make smoke
+python -m sdt_bench.cli validate-step benchmark_data/episodes/toy/episode_0001
 ```
 
-The smoke test uses a tiny fixture repo and episode so it can run quickly without
-network access.
-
-## Running one benchmark episode
+## Run A Full Timeline
 
 ```bash
-python -m sdt_bench.cli validate-episode benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli materialize benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli ingest-visible-docs benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli run-agent benchmark_data/episodes/requests/episode_0001 --agent baseline:dummy
-python -m sdt_bench.cli evaluate benchmark_data/episodes/requests/episode_0001
-python -m sdt_bench.cli report benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli run-timeline benchmark_data/timelines/toy.yaml --agent baseline:dummy
+python -m sdt_bench.cli report-timeline benchmark_data/timelines/toy.yaml --agent baseline:dummy
 ```
 
-## Docker
+## Step-by-step Flow
 
 ```bash
-docker build -t sdt-bench .
-docker run --rm -v "$PWD:/app" sdt-bench validate-episode benchmark_data/episodes/requests/episode_0001
+python -m sdt_bench.cli materialize-step benchmark_data/episodes/toy/episode_0001 --agent baseline:dummy
+python -m sdt_bench.cli run-step benchmark_data/episodes/toy/episode_0001 --agent baseline:dummy
+python -m sdt_bench.cli evaluate-step benchmark_data/episodes/toy/episode_0001 --agent baseline:dummy
 ```
 
-## Interpreting outputs
+## Output Layout
 
-Each command writes artifacts under `runs/<episode_slug>/<run_id>/`. Common files:
-
-- `materialization.json`
-- `environment.json`
-- `chunks.jsonl`
-- `agent_context.json`
-- `mutation_log.jsonl`
-- `retrieval_trace.json`
-- `patch.diff`
-- `citations.json`
-- `review.json`
-- `result.json`
-- `report.md`
-
-## External agents
-
-You can replace the bundled baselines with your own framework:
-
-```bash
-python -m sdt_bench.cli run-agent benchmark_data/episodes/requests/episode_0001 \
-  --agent external \
-  --agent-command "python my_agent.py {context_json} {output_dir}"
+```text
+runs/<timeline_id>/<agent_slug>/<run_id>/
+  steps/<index>__<episode_id>/
+    input/
+    output/
+    harness/
+  timeline_result.json
+  timeline_report.md
 ```
-
-The benchmark writes `agent_context.json` and expects outputs in `external_agent_output/`.

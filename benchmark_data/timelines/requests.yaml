@@ -1,0 +1,11 @@
+timeline_id: requests
+repo_name: requests
+initial_state_id: requests_2023_05
+state_ids:
+  - requests_2023_05
+  - requests_2023_11
+episode_ids:
+  - episode_0001
+default_memory_mode: persistent
+description: Scaffolded real-repository timeline for the requests track.
+

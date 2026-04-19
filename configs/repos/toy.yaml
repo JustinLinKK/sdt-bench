@@ -1,0 +1,12 @@
+name: toy
+github_url: benchmark_data/fixtures/toy_repo
+package_name: toy-pkg
+ecosystem: PyPI
+default_branch: main
+language: python
+package_manager: pip
+install_command: python -c "print('offline install skipped')"
+test_command: python -m pytest
+supported_dependency_files:
+  - pyproject.toml
+notes: Local synthetic repository used by the timeline smoke benchmark.

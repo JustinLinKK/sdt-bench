@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sdt_bench.knowledge.chunking import build_visible_doc_chunks
+from sdt_bench.knowledge.chunking import build_doc_chunks_from_directory
 from sdt_bench.knowledge.mutation_log import derive_mutation_records
-from sdt_bench.schemas.episode import EpisodeSpec
+from sdt_bench.schemas.episode import ProgrammingEpisodeSpec
 from sdt_bench.schemas.result import IngestionDecision
 from sdt_bench.schemas.retrieval import Chunk, MutationRecord, VectorDBSnapshot
 from sdt_bench.utils.hashing import sha256_text
@@ -12,14 +12,27 @@ from sdt_bench.utils.time import utc_timestamp
 from sdt_bench.vectordb.base import VectorDBBackend
 
 
-def ingest_visible_docs(
+def stage_visible_docs(
     *,
-    episode_dir: Path,
-    episode: EpisodeSpec,
+    docs_root: Path,
+    visible_doc_paths: list[str],
+    episode: ProgrammingEpisodeSpec,
+    version_tag: str | None,
     chunk_size: int,
     overlap: int,
 ) -> tuple[list[Chunk], list[MutationRecord], VectorDBSnapshot]:
-    chunks = build_visible_doc_chunks(episode_dir, episode, chunk_size=chunk_size, overlap=overlap)
+    chunks = build_doc_chunks_from_directory(
+        docs_root,
+        visible_doc_paths,
+        chunk_size=chunk_size,
+        overlap=overlap,
+        version_tag=version_tag,
+        metadata={
+            "episode_id": episode.episode_id,
+            "repo_name": episode.repo_name,
+            "is_visible_doc": True,
+        },
+    )
     mutations, delete_chunk_ids, upsert_chunks = derive_mutation_records(
         episode_id=episode.episode_id,
         old_chunks=[],
@@ -41,7 +54,7 @@ def ingest_visible_docs(
 
 def apply_ingestion_decision(
     *,
-    episode: EpisodeSpec,
+    episode: ProgrammingEpisodeSpec,
     decision: IngestionDecision,
     candidate_chunks: list[Chunk],
     backend: VectorDBBackend,
@@ -90,6 +103,35 @@ def apply_ingestion_decision(
     if upsert_chunks:
         backend.upsert_chunks(upsert_chunks)
     return selected_chunks, derived, backend.dump_state()
+
+
+def apply_memory_mutations(
+    *,
+    current_chunks: list[Chunk],
+    candidate_chunks: list[Chunk],
+    mutations: list[MutationRecord],
+) -> list[Chunk]:
+    candidate_map = {chunk.chunk_id: chunk for chunk in candidate_chunks}
+    current_map = {chunk.chunk_id: chunk for chunk in current_chunks}
+
+    for mutation in mutations:
+        if mutation.operation in {"delete", "tombstone"}:
+            current_map.pop(mutation.chunk_id, None)
+            continue
+
+        chunk = candidate_map.get(mutation.chunk_id)
+        if chunk is None:
+            continue
+        if mutation.operation == "update":
+            for existing_chunk_id, existing_chunk in list(current_map.items()):
+                if (
+                    existing_chunk.document_id == chunk.document_id
+                    and existing_chunk.chunk_index == chunk.chunk_index
+                ):
+                    current_map.pop(existing_chunk_id, None)
+        current_map[chunk.chunk_id] = chunk
+
+    return sorted(current_map.values(), key=lambda item: (item.source_path, item.chunk_index))
 
 
 def _select_candidate_chunks(

@@ -1,33 +1,32 @@
-# Vector DB Protocol
+# Vector Memory Protocol
 
-## Chunking
+## Memory state
 
-Visible docs are sorted by normalized relative path and chunked into fixed
-1000-character windows with 150-character overlap.
+Each step receives a serialized memory snapshot:
 
-## Deterministic IDs
+- `input/memory/manifest.json`
+- `input/memory/chunks.jsonl`
+
+The benchmark reconstructs internal retrieval state from that snapshot. Backend-specific files are
+not part of the public contract.
+
+## Mutation semantics
+
+Agents report memory updates through `output/memory_mutations.jsonl`.
+
+Supported operations:
+
+- `insert`
+- `update`
+- `delete`
+- `tombstone`
+
+The harness applies those mutations to the carried memory snapshot before the next step when
+`--memory-mode persistent` is used.
+
+## Chunk IDs
+
+Chunk IDs remain deterministic:
 
 - `document_id = sha256(normalized_source_path)`
-- `content_hash = sha256(content)`
 - `chunk_id = sha256(document_id + ":" + chunk_index + ":" + content_hash)`
-
-These IDs are stable across replays as long as the source path and chunk content
-are unchanged.
-
-## Update semantics
-
-Backends expose upsert, delete, query, lookup, and state dump operations. Mutation
-logging happens at the benchmark layer so inserts, updates, deletes, and
-tombstones can be scored consistently across backends.
-
-## Mutation logs
-
-Each mutation captures the episode, operation, affected chunk/document, hashes,
-timestamp, and reason. Logs are written as JSONL for easy audit and diffing.
-
-## Freshness
-
-Freshness tracks whether retrieved knowledge came from the current episode’s
-visible docs rather than stale or missing state. v0 focuses on fresh chunk
-fraction, stale chunk fraction, and required relevant chunk retrieval.
-

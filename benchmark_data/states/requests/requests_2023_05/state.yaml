@@ -1,0 +1,19 @@
+state_id: requests_2023_05
+timeline_id: requests
+repo_name: requests
+timestamp: "2023-05-01T00:00:00+00:00"
+repo_commit: 0106aced5faa299e6ede89d1230bd6784f2c3660
+repo_ref: refs/tags/v2.31.0
+python_version: "3.11"
+dependency_snapshot:
+  urllib3: "1.26.18"
+environment:
+  install_command: python -c "print('requests scaffold install skipped')"
+  offline: true
+  visible_test_command: python -c "from pathlib import Path; assert Path('requests').exists()"
+docs_manifest_path: docs/manifest.yaml
+docs_root: docs
+tests_root: tests/visible
+metadata:
+  track: scaffold
+
