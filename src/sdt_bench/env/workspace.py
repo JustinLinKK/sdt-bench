@@ -45,9 +45,7 @@ def create_timeline_run_layout(
     run_id: str | None = None,
 ) -> TimelineRunLayout:
     agent_slug = normalize_agent_name(agent_name)
-    agent_root = ensure_dir(
-        PROJECT_ROOT / global_config["paths"]["runs_dir"] / timeline_id / agent_slug
-    )
+    agent_root = ensure_dir(PROJECT_ROOT / global_config["paths"]["runs_dir"] / timeline_id / agent_slug)
     selected_run_id = run_id or build_run_id()
     run_root = ensure_dir(agent_root / selected_run_id)
     steps_root = ensure_dir(run_root / "steps")

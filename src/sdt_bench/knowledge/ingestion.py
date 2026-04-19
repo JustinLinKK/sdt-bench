@@ -124,10 +124,7 @@ def apply_memory_mutations(
             continue
         if mutation.operation == "update":
             for existing_chunk_id, existing_chunk in list(current_map.items()):
-                if (
-                    existing_chunk.document_id == chunk.document_id
-                    and existing_chunk.chunk_index == chunk.chunk_index
-                ):
+                if existing_chunk.document_id == chunk.document_id and existing_chunk.chunk_index == chunk.chunk_index:
                     current_map.pop(existing_chunk_id, None)
         current_map[chunk.chunk_id] = chunk
 

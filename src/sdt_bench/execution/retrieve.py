@@ -25,10 +25,7 @@ def execute_retrieval(
         return decision, [], trace
     retrieved = backend.query(decision.query, decision.top_k)
     available_path_set = set(context.available_visible_doc_paths)
-    labels = [
-        "fresh" if chunk.source_path in available_path_set else "stale"
-        for chunk in retrieved
-    ]
+    labels = ["fresh" if chunk.source_path in available_path_set else "stale" for chunk in retrieved]
     trace = RetrievalTrace(
         episode_id=context.episode.episode_id,
         query=decision.query,

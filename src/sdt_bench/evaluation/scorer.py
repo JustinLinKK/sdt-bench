@@ -15,6 +15,7 @@ from sdt_bench.knowledge.freshness import freshness_stats
 from sdt_bench.schemas import (
     CommandResult,
     MemoryManifest,
+    MemoryMode,
     MutationRecord,
     PatchProposal,
     PatchResult,
@@ -54,10 +55,7 @@ def evaluate_step(
         citations_used=citations,
         summary="Imported from step output.",
     )
-    mutation_records = [
-        MutationRecord.model_validate(item)
-        for item in read_jsonl(layout.output_dir / "memory_mutations.jsonl")
-    ]
+    mutation_records = [MutationRecord.model_validate(item) for item in read_jsonl(layout.output_dir / "memory_mutations.jsonl")]
 
     workspace = Path(manifest.workspace)
     applied, apply_error = apply_patch_text(workspace, patch_text)
@@ -85,9 +83,7 @@ def evaluate_step(
 
     expected_mutations = _read_expected_mutations(bundle.event_dir, bundle.event.gold_mutation_paths)
     expected_retrieval = _read_expected_retrieval(bundle.event_dir, bundle.event.expected_retrieval_path)
-    fresh_ids = {
-        record.chunk_id for record in mutation_records if record.operation in {"insert", "update"}
-    }
+    fresh_ids = {record.chunk_id for record in mutation_records if record.operation in {"insert", "update"}}
     fresh_fraction, stale_fraction, required_retrieved = freshness_stats(
         retrieval_trace,
         fresh_chunk_ids=fresh_ids,
@@ -97,9 +93,7 @@ def evaluate_step(
     metrics = final_score_bundle(
         _build_metrics(
             hidden_passed=hidden_result.passed,
-            visible_passed=(
-                visible_result.passed if bundle.to_state.environment.visible_test_command else None
-            ),
+            visible_passed=(visible_result.passed if bundle.to_state.environment.visible_test_command else None),
             patch_applied=applied,
             files_changed=files_changed,
             lines_added=lines_added,
@@ -122,9 +116,7 @@ def evaluate_step(
         files_changed=files_changed,
         lines_added=lines_added,
         lines_removed=lines_removed,
-        visible_test_status=(
-            visible_result.passed if bundle.to_state.environment.visible_test_command else None
-        ),
+        visible_test_status=(visible_result.passed if bundle.to_state.environment.visible_test_command else None),
         hidden_test_status=hidden_result.passed,
         review_summary=review.summary,
         citations_used=citations,
@@ -163,7 +155,7 @@ def evaluate_timeline(
     repo_spec: RepoSpec,
     timeline_layout,
     agent_name: str,
-    memory_mode: str,
+    memory_mode: MemoryMode,
 ) -> TimelineEvaluationResult:
     step_results: list[StepEvaluationResult] = []
     for step_index, episode_id in enumerate(timeline.episode_ids):

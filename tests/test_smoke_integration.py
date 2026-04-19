@@ -144,9 +144,7 @@ with (output_dir / "memory_mutations.jsonl").open("w", encoding="utf-8") as hand
     assert persistent.exit_code == 0, persistent.stdout
     external_runs = tmp_path / "runtime" / "runs" / "toy" / "external"
     persistent_run_id = (external_runs / "last_run.txt").read_text(encoding="utf-8").strip()
-    step_two_input = read_json(
-        external_runs / persistent_run_id / "steps" / "001__episode_0002" / "input" / "memory" / "manifest.json"
-    )
+    step_two_input = read_json(external_runs / persistent_run_id / "steps" / "001__episode_0002" / "input" / "memory" / "manifest.json")
     assert step_two_input["chunk_count"] > 0
 
     reset = runner.invoke(
@@ -165,7 +163,5 @@ with (output_dir / "memory_mutations.jsonl").open("w", encoding="utf-8") as hand
         ],
     )
     assert reset.exit_code == 0, reset.stdout
-    reset_step_two_input = read_json(
-        external_runs / "run_reset" / "steps" / "001__episode_0002" / "input" / "memory" / "manifest.json"
-    )
+    reset_step_two_input = read_json(external_runs / "run_reset" / "steps" / "001__episode_0002" / "input" / "memory" / "manifest.json")
     assert reset_step_two_input["chunk_count"] == 0

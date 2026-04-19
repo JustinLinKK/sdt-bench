@@ -36,7 +36,7 @@ from sdt_bench.evaluation import (
 from sdt_bench.execution import run_agent_step
 from sdt_bench.knowledge import apply_memory_mutations
 from sdt_bench.paths import get_benchmark_data_dir
-from sdt_bench.schemas import Chunk, MutationRecord, TimelineEvaluationResult
+from sdt_bench.schemas import Chunk, MemoryMode, MutationRecord, TimelineEvaluationResult
 from sdt_bench.utils import console
 from sdt_bench.utils.fs import read_json, read_jsonl
 
@@ -58,6 +58,7 @@ def materialize_step_command(
     run_id: str | None = typer.Option(default=None),
     memory_mode: str = typer.Option("persistent", "--memory-mode"),
 ) -> None:
+    selected_memory_mode = _parse_memory_mode(memory_mode)
     bundle = load_step_bundle(episode_path)
     repo_spec = load_repo_spec(bundle.episode.repo_name)
     global_config = load_global_config()
@@ -76,7 +77,7 @@ def materialize_step_command(
         timeline_layout=timeline_layout,
         step_index=step_index,
         agent_name=agent,
-        memory_mode=memory_mode,
+        memory_mode=selected_memory_mode,
         memory_chunks=[],
     )
     console.print(result)
@@ -157,6 +158,7 @@ def run_timeline_command(
     agent_factory: str | None = typer.Option(None, "--agent-factory"),
     agent_command: str | None = typer.Option(None, "--agent-command"),
 ) -> None:
+    selected_memory_mode = _parse_memory_mode(memory_mode)
     _, timeline = load_timeline_spec(timeline_path)
     repo_spec = load_repo_spec(timeline.repo_name)
     global_config = load_global_config()
@@ -180,8 +182,8 @@ def run_timeline_command(
             timeline_layout=timeline_layout,
             step_index=step_index,
             agent_name=agent,
-            memory_mode=memory_mode,
-            memory_chunks=memory_chunks if memory_mode == "persistent" else [],
+            memory_mode=selected_memory_mode,
+            memory_chunks=memory_chunks if selected_memory_mode == "persistent" else [],
         )
         run_agent_step(
             global_config=global_config,
@@ -208,16 +210,10 @@ def run_timeline_command(
             agent_name=agent,
         )
 
-        if memory_mode == "persistent":
+        if selected_memory_mode == "persistent":
             step_layout = timeline_layout.steps_root / f"{step_index:03d}__{episode_id}"
-            candidate_chunks = [
-                Chunk.model_validate(item)
-                for item in read_jsonl(step_layout / "harness" / "candidate_chunks.jsonl")
-            ]
-            mutations = [
-                MutationRecord.model_validate(item)
-                for item in read_jsonl(step_layout / "output" / "memory_mutations.jsonl")
-            ]
+            candidate_chunks = [Chunk.model_validate(item) for item in read_jsonl(step_layout / "harness" / "candidate_chunks.jsonl")]
+            mutations = [MutationRecord.model_validate(item) for item in read_jsonl(step_layout / "output" / "memory_mutations.jsonl")]
             memory_chunks = apply_memory_mutations(
                 current_chunks=memory_chunks,
                 candidate_chunks=candidate_chunks,
@@ -229,7 +225,7 @@ def run_timeline_command(
         repo_spec=repo_spec,
         timeline_layout=timeline_layout,
         agent_name=agent,
-        memory_mode=memory_mode,
+        memory_mode=selected_memory_mode,
     )
     report_path = timeline_layout.run_root / "timeline_report.md"
     report_path.write_text(render_timeline_report(timeline_result), encoding="utf-8")
@@ -339,3 +335,12 @@ def aggregate_results_command(
 
 if __name__ == "__main__":
     app()
+
+
+def _parse_memory_mode(value: str) -> MemoryMode:
+    normalized = value.strip().lower()
+    if normalized == "persistent":
+        return "persistent"
+    if normalized == "reset":
+        return "reset"
+    raise typer.BadParameter("memory-mode must be either 'persistent' or 'reset'.")

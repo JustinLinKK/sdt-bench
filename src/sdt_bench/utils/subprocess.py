@@ -44,7 +44,5 @@ def run_command(
         stderr=result.stderr,
     )
     if check and result.returncode != 0:
-        raise RuntimeError(
-            f"Command failed ({result.returncode}): {command}\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-        )
+        raise RuntimeError(f"Command failed ({result.returncode}): {command}\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
     return completed

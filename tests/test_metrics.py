@@ -106,7 +106,5 @@ def test_mutation_metrics_final_score_and_timeline_aggregation() -> None:
 
 
 def test_correctness_score_without_visible_tests() -> None:
-    score = correctness_score(
-        hidden_tests_passed=True, visible_tests_passed=None, patch_applied=True
-    )
+    score = correctness_score(hidden_tests_passed=True, visible_tests_passed=None, patch_applied=True)
     assert score == 1.0

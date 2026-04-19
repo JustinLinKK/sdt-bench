@@ -50,9 +50,7 @@ class InMemoryBackend(VectorDBBackend):
         return self._chunks.get(chunk_id)
 
     def dump_state(self) -> VectorDBSnapshot:
-        chunks = sorted(
-            self._chunks.values(), key=lambda item: (item.source_path, item.chunk_index)
-        )
+        chunks = sorted(self._chunks.values(), key=lambda item: (item.source_path, item.chunk_index))
         documents = defaultdict(set)
         for chunk in chunks:
             documents[chunk.document_id].add(chunk.chunk_id)

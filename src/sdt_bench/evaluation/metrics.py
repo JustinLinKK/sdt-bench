@@ -7,9 +7,7 @@ from sdt_bench.schemas.result import StepEvaluationResult, TimelineAggregateMetr
 from sdt_bench.schemas.retrieval import MutationRecord
 
 
-def mutation_metrics(
-    actual: list[MutationRecord], expected: list[dict]
-) -> tuple[float, float, float]:
+def mutation_metrics(actual: list[MutationRecord], expected: list[dict]) -> tuple[float, float, float]:
     actual_set = {
         (
             record.operation,
@@ -65,11 +63,7 @@ def freshness_score(
     stale_chunk_fraction: float,
     required_fresh_chunks_retrieved: bool,
 ) -> float:
-    return (
-        0.5 * fresh_chunk_fraction
-        + 0.3 * (1.0 if required_fresh_chunks_retrieved else 0.0)
-        + 0.2 * (1.0 - stale_chunk_fraction)
-    )
+    return 0.5 * fresh_chunk_fraction + 0.3 * (1.0 if required_fresh_chunks_retrieved else 0.0) + 0.2 * (1.0 - stale_chunk_fraction)
 
 
 def final_score_bundle(metrics: EvaluationMetrics) -> EvaluationMetrics:
@@ -83,9 +77,7 @@ def final_score_bundle(metrics: EvaluationMetrics) -> EvaluationMetrics:
         metrics.stale_chunk_fraction,
         metrics.required_fresh_chunks_retrieved,
     )
-    metrics.churn_score = churn_score(
-        metrics.files_changed, metrics.lines_added, metrics.lines_removed
-    )
+    metrics.churn_score = churn_score(metrics.files_changed, metrics.lines_added, metrics.lines_removed)
     metrics.final_score = (
         0.55 * metrics.correctness_score
         + 0.20 * metrics.mutation_f1
@@ -140,8 +132,6 @@ def aggregate_timeline_metrics(results: list[StepEvaluationResult]) -> TimelineA
         cumulative_success=sum(hidden_pass_values) / step_count,
         adaptation_area=sum(final_scores) / step_count,
         average_stale_retrieval_rate=sum(stale_rates) / step_count,
-        mean_time_to_recover=(
-            sum(recovery_windows) / len(recovery_windows) if recovery_windows else 0.0
-        ),
+        mean_time_to_recover=(sum(recovery_windows) / len(recovery_windows) if recovery_windows else 0.0),
         max_drawdown=max_drawdown,
     )

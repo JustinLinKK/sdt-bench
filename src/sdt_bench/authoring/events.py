@@ -39,9 +39,7 @@ def build_event_stream(
     for previous, current in zip(ordered, ordered[1:], strict=False):
         new_advisories = sorted(set(current.advisories) - set(previous.advisories))
         event_type = classify_event_type(previous.version, current.version, new_advisories)
-        event_id = sha256_text(
-            f"{repo_spec.name}:{repo_spec.package_name or repo_spec.name}:{previous.version}:{current.version}"
-        )[:16]
+        event_id = sha256_text(f"{repo_spec.name}:{repo_spec.package_name or repo_spec.name}:{previous.version}:{current.version}")[:16]
         events.append(
             EventStreamRecord(
                 event_id=event_id,

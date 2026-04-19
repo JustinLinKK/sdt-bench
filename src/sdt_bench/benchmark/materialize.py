@@ -10,7 +10,7 @@ from sdt_bench.env import (
     install_repo,
 )
 from sdt_bench.repos import get_repo_adapter
-from sdt_bench.schemas import Chunk, MemoryManifest, RepoSpec, StepInputManifest
+from sdt_bench.schemas import Chunk, MemoryManifest, MemoryMode, RepoSpec, StepInputManifest
 from sdt_bench.utils.fs import ensure_dir, write_json, write_jsonl
 from sdt_bench.utils.git import checkout_commit, clone_repo
 from sdt_bench.utils.subprocess import run_command
@@ -24,7 +24,7 @@ def materialize_step(
     timeline_layout: TimelineRunLayout,
     step_index: int,
     agent_name: str,
-    memory_mode: str,
+    memory_mode: MemoryMode,
     memory_chunks: list[Chunk],
 ) -> dict[str, str]:
     step_root = timeline_layout.steps_root / f"{step_index:03d}__{bundle.episode.episode_id}"
@@ -64,9 +64,7 @@ def materialize_step(
         destination.write_text(entry.source_path.read_text(encoding="utf-8"), encoding="utf-8")
 
     visible_failure_destination = layout.visible_failure_dir / "ci_failure.txt"
-    visible_failure_text = (
-        bundle.episode_dir / bundle.episode.visible_failure_path
-    ).read_text(encoding="utf-8")
+    visible_failure_text = (bundle.episode_dir / bundle.episode.visible_failure_path).read_text(encoding="utf-8")
     visible_failure_destination.write_text(visible_failure_text, encoding="utf-8")
 
     memory_manifest = MemoryManifest(

@@ -79,16 +79,11 @@ def import_external_agent_output(
     ]
     missing = [str(path) for path in required_paths if not path.exists()]
     if missing:
-        raise FileNotFoundError(
-            "External agent output is incomplete. Missing required files: "
-            + ", ".join(missing)
-        )
+        raise FileNotFoundError("External agent output is incomplete. Missing required files: " + ", ".join(missing))
 
     plan = AgentPlan.model_validate(read_json(Path(manifest.plan_path)))
     ingestion = IngestionDecision.model_validate(read_json(Path(manifest.ingestion_decision_path)))
-    retrieval_decision = RetrievalDecision.model_validate(
-        read_json(Path(manifest.retrieval_decision_path))
-    )
+    retrieval_decision = RetrievalDecision.model_validate(read_json(Path(manifest.retrieval_decision_path)))
     retrieval_trace = RetrievalTrace.model_validate(read_json(Path(manifest.retrieval_trace_path)))
     citations_payload = read_json(Path(manifest.citations_path))
     proposal = PatchProposal(
@@ -98,8 +93,5 @@ def import_external_agent_output(
         summary="Imported from external agent output.",
     )
     review = ReviewResult.model_validate(read_json(Path(manifest.review_path)))
-    mutations = [
-        MutationRecord.model_validate(item)
-        for item in read_jsonl(Path(manifest.memory_mutations_path))
-    ]
+    mutations = [MutationRecord.model_validate(item) for item in read_jsonl(Path(manifest.memory_mutations_path))]
     return plan, ingestion, retrieval_decision, retrieval_trace, proposal, review, mutations

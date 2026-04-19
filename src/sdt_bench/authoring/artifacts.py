@@ -40,10 +40,9 @@ def synthesize_episode_artifacts(
         new_chunks=new_chunks,
         reason="artifact_synthesis",
     )
-    required_chunk_ids = [
-        chunk.chunk_id
-        for chunk in sorted(new_chunks, key=lambda item: (item.source_path, item.chunk_index))
-    ][:required_chunk_count]
+    required_chunk_ids = [chunk.chunk_id for chunk in sorted(new_chunks, key=lambda item: (item.source_path, item.chunk_index))][
+        :required_chunk_count
+    ]
     write_yaml(
         event_dir / "artifacts" / "gold_mutations.yaml",
         {

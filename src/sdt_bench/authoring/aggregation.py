@@ -17,9 +17,7 @@ def aggregate_results(results_root: Path) -> AggregateSummary:
     mean_final_score = sum(result.metrics.final_score for result in results) / total_runs
     mean_mutation_f1 = sum(result.metrics.mutation_f1 for result in results) / total_runs
     mean_freshness = sum(result.metrics.freshness_score for result in results) / total_runs
-    hidden_pass_rate = (
-        sum(1 for result in results if result.metrics.hidden_tests_passed) / total_runs
-    )
+    hidden_pass_rate = sum(1 for result in results if result.metrics.hidden_tests_passed) / total_runs
 
     grouped: dict[str, list[EvaluationResult]] = defaultdict(list)
     for result in results:

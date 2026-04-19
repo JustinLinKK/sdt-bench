@@ -60,9 +60,7 @@ class QdrantBackend(VectorDBBackend):
         if chunk_ids:
             self.client.delete(
                 collection_name=self.collection_name,
-                points_selector=qm.PointIdsList(
-                    points=[_point_id(chunk_id) for chunk_id in chunk_ids]
-                ),
+                points_selector=qm.PointIdsList(points=[_point_id(chunk_id) for chunk_id in chunk_ids]),
             )
         return []
 
@@ -99,9 +97,7 @@ class QdrantBackend(VectorDBBackend):
         return retrieved
 
     def get_chunk(self, chunk_id: str) -> Chunk | None:
-        records = self.client.retrieve(
-            collection_name=self.collection_name, ids=[_point_id(chunk_id)], with_payload=True
-        )
+        records = self.client.retrieve(collection_name=self.collection_name, ids=[_point_id(chunk_id)], with_payload=True)
         if not records:
             return None
         payload = dict(records[0].payload or {})
