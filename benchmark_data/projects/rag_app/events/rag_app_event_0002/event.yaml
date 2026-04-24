@@ -1,0 +1,24 @@
+event_id: rag_app_event_0002
+from_state_id: H1
+to_state_id: H2
+dependency_name: haystack-ai
+ecosystem: pypi
+old_version: 2.0.0
+new_version: 2.1.0
+event_type: major
+summary: Prompt builder and generator composition replace the legacy generation path.
+available_at: '2024-09-15T00:00:00+00:00'
+breaking_change_expected: true
+affected_capability: rag_app
+visible_doc_paths:
+- visible_docs/release_notes.md
+- visible_docs/migration_guide.md
+gold_mutation_paths:
+- artifacts/gold_mutations.yaml
+expected_retrieval_path: artifacts/expected_retrieval_chunks.yaml
+metadata:
+  product_name: rag_app
+  breakpoint_id: B1
+  breakpoint_types:
+  - dependency_drift
+  - behavior_change

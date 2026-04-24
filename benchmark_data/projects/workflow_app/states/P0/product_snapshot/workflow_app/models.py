@@ -1,0 +1,2 @@
+class RunSummary(dict):
+    pass

@@ -9,22 +9,22 @@ make install
 ## Validate One Step
 
 ```bash
-python -m sdt_bench.cli validate-step benchmark_data/episodes/toy/episode_0001
+python -m sdt_bench.cli validate-step benchmark_data/projects/toy/episodes/episode_0001
 ```
 
 ## Run A Full Timeline
 
 ```bash
-python -m sdt_bench.cli run-timeline benchmark_data/timelines/toy.yaml --agent baseline:dummy
-python -m sdt_bench.cli report-timeline benchmark_data/timelines/toy.yaml --agent baseline:dummy
+python -m sdt_bench.cli run-timeline benchmark_data/projects/toy/timeline.yaml --agent baseline:dummy
+python -m sdt_bench.cli report-timeline benchmark_data/projects/toy/timeline.yaml --agent baseline:dummy
 ```
 
 ## Step-by-step Flow
 
 ```bash
-python -m sdt_bench.cli materialize-step benchmark_data/episodes/toy/episode_0001 --agent baseline:dummy
-python -m sdt_bench.cli run-step benchmark_data/episodes/toy/episode_0001 --agent baseline:dummy
-python -m sdt_bench.cli evaluate-step benchmark_data/episodes/toy/episode_0001 --agent baseline:dummy
+python -m sdt_bench.cli materialize-step benchmark_data/projects/toy/episodes/episode_0001 --agent baseline:dummy
+python -m sdt_bench.cli run-step benchmark_data/projects/toy/episodes/episode_0001 --agent baseline:dummy
+python -m sdt_bench.cli evaluate-step benchmark_data/projects/toy/episodes/episode_0001 --agent baseline:dummy
 ```
 
 ## Output Layout

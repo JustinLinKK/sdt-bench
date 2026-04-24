@@ -1,0 +1,20 @@
+timeline_id: crawler_app
+project_id: crawler_app
+initial_state_id: S0
+state_ids:
+- S0
+- S1
+- S2
+- S3
+- S4
+episode_ids:
+- episode_0001
+- episode_0002
+- episode_0003
+- episode_0004
+- episode_0005
+- episode_0006
+- episode_0007
+- episode_0008
+default_memory_mode: persistent
+description: crawler_app timeline for the project-first benchmark.

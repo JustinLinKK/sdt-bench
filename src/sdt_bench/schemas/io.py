@@ -19,7 +19,7 @@ class StepInputManifest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     timeline_id: str = Field(min_length=1)
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     episode_id: str = Field(min_length=1)
     step_index: int = Field(ge=0)
     agent_name: str = Field(min_length=1)

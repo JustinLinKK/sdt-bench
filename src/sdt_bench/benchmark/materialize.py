@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 
 from sdt_bench.benchmark.loader import LoadedStep
 from sdt_bench.benchmark.visibility import build_docs_manifest, resolve_visible_docs
@@ -9,10 +10,9 @@ from sdt_bench.env import (
     create_step_layout,
     install_repo,
 )
-from sdt_bench.repos import get_repo_adapter
-from sdt_bench.schemas import Chunk, MemoryManifest, MemoryMode, RepoSpec, StepInputManifest
-from sdt_bench.utils.fs import ensure_dir, write_json, write_jsonl
-from sdt_bench.utils.git import checkout_commit, clone_repo
+from sdt_bench.projects import get_project_adapter
+from sdt_bench.schemas import Chunk, MemoryManifest, MemoryMode, ProjectSpec, StepInputManifest
+from sdt_bench.utils.fs import copytree, ensure_dir, write_json, write_jsonl
 from sdt_bench.utils.subprocess import run_command
 
 
@@ -20,7 +20,7 @@ def materialize_step(
     *,
     global_config: dict,
     bundle: LoadedStep,
-    repo_spec: RepoSpec,
+    project_spec: ProjectSpec,
     timeline_layout: TimelineRunLayout,
     step_index: int,
     agent_name: str,
@@ -36,12 +36,14 @@ def materialize_step(
         episode_id=bundle.episode.episode_id,
     )
 
-    clone_repo(repo_spec.github_url, layout.workspace_dir)
-    checkout_commit(layout.workspace_dir, bundle.from_state.repo_commit)
+    copytree(bundle.from_state_dir / bundle.from_state.snapshot_root, layout.workspace_dir)
 
-    adapter = get_repo_adapter(repo_spec)
+    adapter = get_project_adapter(project_spec)
     adapter.assert_supported()
     adapter.prepare_workspace(layout.workspace_dir)
+    state_tests_root = bundle.to_state_dir / bundle.to_state.tests_root
+    if state_tests_root.exists():
+        copytree(state_tests_root, layout.workspace_dir / bundle.to_state.tests_root)
 
     install_result = install_repo(
         layout.workspace_dir,
@@ -50,7 +52,7 @@ def materialize_step(
         offline=bundle.to_state.environment.offline,
     )
     freeze = run_command(
-        ["python", "-m", "pip", "freeze"],
+        [sys.executable, "-m", "pip", "freeze"],
         cwd=layout.workspace_dir,
         timeout=global_config["runtime"]["install_timeout_seconds"],
         check=False,
@@ -87,7 +89,7 @@ def materialize_step(
     write_json(layout.input_dir / "event.json", bundle.event.model_dump(mode="json"))
     write_json(layout.input_dir / "from_state.json", bundle.from_state.model_dump(mode="json"))
     write_json(layout.input_dir / "to_state.json", bundle.to_state.model_dump(mode="json"))
-    write_json(layout.input_dir / "repo_spec.json", repo_spec.model_dump(mode="json"))
+    write_json(layout.input_dir / "project_spec.json", project_spec.model_dump(mode="json"))
     write_json(
         layout.docs_dir / "manifest.json",
         {"documents": [document.model_dump(mode="json") for document in docs_manifest]},
@@ -95,7 +97,7 @@ def materialize_step(
 
     input_manifest = StepInputManifest(
         timeline_id=bundle.timeline.timeline_id,
-        repo_name=bundle.episode.repo_name,
+        project_id=bundle.episode.project_id,
         episode_id=bundle.episode.episode_id,
         step_index=step_index,
         agent_name=agent_name,

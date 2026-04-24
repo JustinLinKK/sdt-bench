@@ -1,0 +1,3 @@
+tests:
+- name: toy_greet
+  description: Ensure toy_pkg.greet remains stable.

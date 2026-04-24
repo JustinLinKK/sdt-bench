@@ -4,7 +4,7 @@ from pathlib import Path
 
 from sdt_bench.authoring.aggregation import aggregate_results
 from sdt_bench.authoring.events import build_event_stream, classify_event_type
-from sdt_bench.schemas import ReleaseRecord, RepoSpec
+from sdt_bench.schemas import ProjectSpec, ReleaseRecord
 from sdt_bench.utils.fs import write_json
 
 
@@ -16,18 +16,15 @@ def test_classify_event_type_prefers_security_and_semver() -> None:
 
 
 def test_build_event_stream_from_release_records() -> None:
-    repo_spec = RepoSpec.model_validate(
+    project_spec = ProjectSpec.model_validate(
         {
-            "name": "requests",
-            "github_url": "https://github.com/psf/requests.git",
-            "package_name": "requests",
-            "ecosystem": "PyPI",
-            "default_branch": "main",
+            "project_id": "workflow_app",
+            "product_name": "workflow_app",
+            "framework_name": "Prefect",
+            "framework_package": "prefect",
+            "framework_repo_url": "https://github.com/PrefectHQ/prefect",
             "language": "python",
             "package_manager": "pip",
-            "install_command": "python -m pip install -e . --no-deps",
-            "test_command": "python -m pytest",
-            "supported_dependency_files": ["pyproject.toml"],
             "notes": "test",
         }
     )
@@ -36,7 +33,7 @@ def test_build_event_stream_from_release_records() -> None:
         ReleaseRecord(package_name="requests", ecosystem="PYPI", version="1.0.1", advisories=[]),
         ReleaseRecord(package_name="requests", ecosystem="PYPI", version="1.1.0", advisories=["OSV-1"]),
     ]
-    events = build_event_stream(repo_spec, releases)
+    events = build_event_stream(project_spec, releases)
     assert [event.event_type for event in events] == ["patch", "security"]
 
 
@@ -49,7 +46,7 @@ def test_aggregate_results_reads_step_result_json(tmp_path: Path) -> None:
             "timeline_id": "toy",
             "episode_id": "episode_0001",
             "step_index": 0,
-            "repo_name": "toy",
+            "project_id": "toy",
             "run_id": "run_1",
             "agent_name": "baseline:dummy",
             "memory_mode": "persistent",

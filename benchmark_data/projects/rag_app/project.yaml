@@ -1,0 +1,8 @@
+project_id: rag_app
+product_name: rag_app
+framework_name: Haystack
+framework_package: haystack-ai
+framework_repo_url: https://github.com/deepset-ai/haystack
+language: python
+package_manager: pip
+notes: rag_app is a project-first benchmark track built on Haystack.

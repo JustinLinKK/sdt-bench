@@ -1,0 +1,5 @@
+RUNTIME_MODE = 'prefect3'
+DEPLOYMENT_MODE = 'worker'
+PARAM_MODEL = 'v2'
+TASK_STYLE = 'async_compatible'
+INTEGRATION_BACKEND = 'local'

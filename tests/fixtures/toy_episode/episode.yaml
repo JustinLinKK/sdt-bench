@@ -1,5 +1,5 @@
 episode_id: episode_0001
-repo_name: toy
+project_id: toy
 base_commit: REPLACE_COMMIT
 base_ref: refs/heads/main
 dependency_event:

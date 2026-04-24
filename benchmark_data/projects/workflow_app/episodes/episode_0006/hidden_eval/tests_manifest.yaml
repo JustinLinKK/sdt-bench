@@ -1,0 +1,3 @@
+tests:
+- name: workflow_app_p3_contract
+  description: Validate the hidden P3 state contract for workflow_app.

@@ -5,10 +5,7 @@
 It contains:
 
 - `manifest.yaml` for top-level dataset discovery
-- `timelines/` for ordered repo timelines
-- `states/` for immutable software states
-- `events/` for dependency-drift transitions
-- `episodes/` for agent-facing step definitions
+- `projects/` for the canonical project-first dataset layout
 - `fixtures/` for local synthetic repos
 - `authoring/` for generated release streams, event streams, and historical snapshots
 

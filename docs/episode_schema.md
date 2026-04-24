@@ -4,13 +4,14 @@
 
 - `state_id`
 - `timeline_id`
-- `repo_name`
+- `project_id`
 - `timestamp`
-- `repo_commit`
+- `source_ref`
 - `dependency_snapshot`
 - `environment.install_command`
 - `environment.offline`
 - `environment.visible_test_command`
+- `snapshot_root`
 - `docs_manifest_path`
 
 ## `DependencyEventSpec`
@@ -32,7 +33,7 @@
 
 - `episode_id`
 - `timeline_id`
-- `repo_name`
+- `project_id`
 - `from_state_id`
 - `to_state_id`
 - `event_id`
@@ -47,7 +48,7 @@
 ## `TimelineSpec`
 
 - `timeline_id`
-- `repo_name`
+- `project_id`
 - `initial_state_id`
 - `state_ids`
 - `episode_ids`

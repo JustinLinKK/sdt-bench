@@ -1,0 +1,3 @@
+tests:
+- name: crawler_app_s2_contract
+  description: Validate the hidden S2 state contract for crawler_app.

@@ -22,7 +22,7 @@ class EventStreamRecord(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     event_id: str = Field(min_length=1)
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     dependency_name: str = Field(min_length=1)
     ecosystem: str = Field(min_length=1)
     old_version: str = Field(min_length=1)
@@ -36,7 +36,7 @@ class EventStreamRecord(BaseModel):
 class SnapshotManifest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     source_url: str = Field(min_length=1)
     requested_ref: str = Field(min_length=1)
     resolved_commit: str = Field(min_length=1)
@@ -52,5 +52,5 @@ class AggregateSummary(BaseModel):
     mean_mutation_f1: float = 0.0
     mean_freshness_score: float = 0.0
     hidden_pass_rate: float = 0.0
-    auac_per_repo: dict[str, float] = Field(default_factory=dict)
+    auac_per_project: dict[str, float] = Field(default_factory=dict)
     regression_rate: float = 0.0

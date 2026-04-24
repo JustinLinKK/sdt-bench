@@ -1,0 +1,8 @@
+project_id: crawler_app
+product_name: crawler_app
+framework_name: Scrapy
+framework_package: scrapy
+framework_repo_url: https://github.com/scrapy/scrapy
+language: python
+package_manager: pip
+notes: crawler_app is a project-first benchmark track built on Scrapy.

@@ -5,7 +5,7 @@
 ## Core flow
 
 1. Load a `ProgrammingEpisodeSpec` and resolve its `from_state`, `to_state`, `event`, and `timeline`.
-2. Materialize the repository from `from_state` and install the offline environment declared by `to_state`.
+2. Materialize the project snapshot from `from_state` and install the environment declared by `to_state`.
 3. Stage only the documents visible at `to_state.timestamp` into `input/docs/available/`.
 4. Mount the current memory snapshot under `input/memory/`.
 5. Let the agent read `input/` and write required artifacts under `output/`.
@@ -24,4 +24,4 @@
 
 - Code does not persist across steps.
 - Memory does persist when `--memory-mode persistent` is used.
-- Hidden evaluation artifacts stay under the harness-owned `episodes/<repo>/<episode>/hidden_eval/` tree and are never copied into `input/`.
+- Hidden evaluation artifacts stay under the harness-owned `projects/<project_id>/episodes/<episode_id>/hidden_eval/` tree and are never copied into `input/`.

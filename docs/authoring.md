@@ -6,11 +6,11 @@ current typed episode model.
 
 ## Commands
 
-- `author-harvest-releases --repo-name <name>` fetches package release history and optional OSV advisories.
-- `author-build-events --repo-name <name>` converts harvested releases into an ordered dependency-event stream.
-- `author-materialize-snapshot --repo-name <name> --ref <git-ref>` creates a replayable repository snapshot manifest.
+- `author-harvest-releases --project-id <id>` fetches framework package release history and optional OSV advisories.
+- `author-build-events --project-id <id>` converts harvested releases into an ordered dependency-event stream.
+- `author-materialize-snapshot --project-id <id> --ref <git-ref>` creates a replayable upstream framework snapshot manifest.
 - `author-synthesize-artifacts <episode-path>` generates `gold_mutations.yaml` and `expected_retrieval_chunks.yaml`.
-- `aggregate-results --results-root runs` summarizes benchmark runs and computes longitudinal metrics such as AUAC-like per-repo curves.
+- `aggregate-results --results-root runs` summarizes benchmark runs and computes longitudinal metrics such as AUAC-like per-project curves.
 
 ## Data layout
 
@@ -20,7 +20,7 @@ Authoring outputs live under `benchmark_data/authoring/`:
 - `events/`
 - `snapshots/`
 
-Episodes remain under `benchmark_data/episodes/`.
+Benchmark projects live under `benchmark_data/projects/<project_id>/`.
 
 ## Relationship to the pilot
 

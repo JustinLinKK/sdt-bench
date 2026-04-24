@@ -1,0 +1,20 @@
+timeline_id: workflow_app
+project_id: workflow_app
+initial_state_id: P0
+state_ids:
+- P0
+- P1
+- P2
+- P3
+- P4
+episode_ids:
+- episode_0001
+- episode_0002
+- episode_0003
+- episode_0004
+- episode_0005
+- episode_0006
+- episode_0007
+- episode_0008
+default_memory_mode: persistent
+description: workflow_app timeline for the project-first benchmark.

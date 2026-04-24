@@ -20,9 +20,21 @@ def make_temp_config(tmp_path: Path) -> Path:
     return destination
 
 
+def project_root(project_id: str) -> Path:
+    return PROJECT_ROOT / "benchmark_data" / "projects" / project_id
+
+
+def project_episode_path(project_id: str, episode_id: str) -> Path:
+    return project_root(project_id) / "episodes" / episode_id
+
+
+def project_timeline_path(project_id: str) -> Path:
+    return project_root(project_id) / "timeline.yaml"
+
+
 def toy_episode_path(episode_id: str) -> Path:
-    return PROJECT_ROOT / "benchmark_data" / "episodes" / "toy" / episode_id
+    return project_episode_path("toy", episode_id)
 
 
 def toy_timeline_path() -> Path:
-    return PROJECT_ROOT / "benchmark_data" / "timelines" / "toy.yaml"
+    return project_timeline_path("toy")

@@ -27,7 +27,7 @@ class ProgrammingEpisodeSpec(BaseModel):
 
     episode_id: str = Field(min_length=1)
     timeline_id: str = Field(min_length=1)
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     from_state_id: str = Field(min_length=1)
     to_state_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)

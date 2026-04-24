@@ -2,10 +2,11 @@
 
 ## First-class objects
 
-- `TemporalStateSpec`: immutable repository state, dependency snapshot, environment, and visible state docs
+- `ProjectSpec`: benchmark-project metadata
+- `TemporalStateSpec`: immutable project state, dependency snapshot, environment, and visible state docs
 - `DependencyEventSpec`: drift event linking `from_state` to `to_state`
 - `ProgrammingEpisodeSpec`: agent-facing transition task
-- `TimelineSpec`: ordered set of states and episodes for one repo
+- `TimelineSpec`: ordered set of states and episodes for one project
 
 ## What the agent sees
 

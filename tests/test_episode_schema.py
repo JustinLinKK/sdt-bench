@@ -12,21 +12,22 @@ from sdt_bench.utils.fs import read_yaml
 
 
 def test_programming_episode_schema_validates_toy_episode() -> None:
-    episode_yaml = Path("benchmark_data/episodes/toy/episode_0001/episode.yaml")
+    episode_yaml = Path("benchmark_data/projects/toy/episodes/episode_0001/episode.yaml")
     episode = ProgrammingEpisodeSpec.model_validate(read_yaml(episode_yaml))
     assert episode.timeline_id == "toy"
     assert episode.event_id == "toy_event_0001"
+    assert episode.project_id == "toy"
 
 
 def test_timeline_schema_requires_ordered_lists() -> None:
-    payload = read_yaml(Path("benchmark_data/timelines/toy.yaml"))
+    payload = read_yaml(Path("benchmark_data/projects/toy/timeline.yaml"))
     payload["episode_ids"] = []
     with pytest.raises(ValidationError):
         TimelineSpec.model_validate(payload)
 
 
 def test_temporal_state_schema_requires_install_command() -> None:
-    payload = read_yaml(Path("benchmark_data/states/toy/toy_2026_01/state.yaml"))
+    payload = read_yaml(Path("benchmark_data/projects/toy/states/toy_2026_01/state.yaml"))
     payload["environment"]["install_command"] = ""
     with pytest.raises(ValidationError):
         TemporalStateSpec.model_validate(payload)

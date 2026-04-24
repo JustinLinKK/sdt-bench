@@ -14,7 +14,7 @@ make install
 make lint
 make test
 make smoke
-sdt-bench author-harvest-releases --repo-name requests
+sdt-bench author-harvest-releases --project-id crawler_app
 ```
 
 ## Design rules
@@ -22,5 +22,5 @@ sdt-bench author-harvest-releases --repo-name requests
 - keep state explicit and serializable
 - avoid hidden global state
 - prefer deterministic IDs, timestamps, and artifact naming
-- keep benchmark logic generic and repo-specific behavior isolated
+- keep benchmark logic generic and project-specific behavior isolated
 - keep bundled baselines separate from the benchmark core package

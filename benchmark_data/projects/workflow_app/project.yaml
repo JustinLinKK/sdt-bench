@@ -1,0 +1,8 @@
+project_id: workflow_app
+product_name: workflow_app
+framework_name: Prefect
+framework_package: prefect
+framework_repo_url: https://github.com/PrefectHQ/prefect
+language: python
+package_manager: pip
+notes: workflow_app is a project-first benchmark track built on Prefect.

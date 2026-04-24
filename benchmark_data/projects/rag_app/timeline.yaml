@@ -1,0 +1,20 @@
+timeline_id: rag_app
+project_id: rag_app
+initial_state_id: H0
+state_ids:
+- H0
+- H1
+- H2
+- H3
+- H4
+episode_ids:
+- episode_0001
+- episode_0002
+- episode_0003
+- episode_0004
+- episode_0005
+- episode_0006
+- episode_0007
+- episode_0008
+default_memory_mode: persistent
+description: rag_app timeline for the project-first benchmark.

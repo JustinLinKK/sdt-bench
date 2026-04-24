@@ -11,7 +11,7 @@ class TimelineSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     timeline_id: str = Field(min_length=1)
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     initial_state_id: str = Field(min_length=1)
     state_ids: list[str] = Field(default_factory=list)
     episode_ids: list[str] = Field(default_factory=list)

@@ -7,7 +7,7 @@ from sdt_bench.schemas.event import DependencyEventSpec
 from sdt_bench.schemas.io import MemoryManifest, StepInputManifest
 from sdt_bench.schemas.metrics import EvaluationMetrics
 from sdt_bench.schemas.patch import PatchProposal, PatchResult, ReviewResult
-from sdt_bench.schemas.repo import RepoSpec
+from sdt_bench.schemas.project import ProjectSpec
 from sdt_bench.schemas.retrieval import RetrievalTrace, RetrievedChunk
 from sdt_bench.schemas.state import TemporalStateSpec
 from sdt_bench.schemas.timeline import MemoryMode, TimelineSpec
@@ -21,7 +21,7 @@ class AgentContext(BaseModel):
     event: DependencyEventSpec
     from_state: TemporalStateSpec
     to_state: TemporalStateSpec
-    repo_spec: RepoSpec
+    project_spec: ProjectSpec
     step_manifest: StepInputManifest
     step_index: int = Field(ge=0)
     workspace: str = Field(min_length=1)
@@ -82,7 +82,7 @@ class StepEvaluationResult(BaseModel):
     timeline_id: str = Field(min_length=1)
     episode_id: str = Field(min_length=1)
     step_index: int = Field(ge=0)
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     run_id: str = Field(min_length=1)
     agent_name: str = Field(min_length=1)
     memory_mode: MemoryMode = "persistent"
@@ -113,7 +113,7 @@ class TimelineEvaluationResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     timeline_id: str = Field(min_length=1)
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     run_id: str = Field(min_length=1)
     agent_name: str = Field(min_length=1)
     memory_mode: MemoryMode = "persistent"

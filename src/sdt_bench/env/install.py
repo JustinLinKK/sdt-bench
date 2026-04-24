@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from sdt_bench.utils.subprocess import run_command
@@ -20,7 +21,7 @@ def install_repo(
             "UV_NO_PROGRESS": "1",
         }
     run_command(
-        ["python", "-m", "ensurepip", "--upgrade"],
+        [sys.executable, "-m", "ensurepip", "--upgrade"],
         cwd=workspace,
         timeout=timeout_seconds,
         check=False,

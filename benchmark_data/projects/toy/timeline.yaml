@@ -1,0 +1,12 @@
+timeline_id: toy
+project_id: toy
+initial_state_id: toy_2026_01
+state_ids:
+- toy_2026_01
+- toy_2026_02
+- toy_2026_03
+episode_ids:
+- episode_0001
+- episode_0002
+default_memory_mode: persistent
+description: Synthetic offline smoke project for the project-first benchmark.

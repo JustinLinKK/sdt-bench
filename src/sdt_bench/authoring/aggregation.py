@@ -21,12 +21,12 @@ def aggregate_results(results_root: Path) -> AggregateSummary:
 
     grouped: dict[str, list[EvaluationResult]] = defaultdict(list)
     for result in results:
-        grouped[result.repo_name].append(result)
+        grouped[result.project_id].append(result)
 
-    auac_per_repo: dict[str, float] = {}
+    auac_per_project: dict[str, float] = {}
     regression_failures = 0
-    for repo_name, repo_results in grouped.items():
-        ordered = sorted(repo_results, key=lambda item: item.episode_id)
+    for project_id, project_results in grouped.items():
+        ordered = sorted(project_results, key=lambda item: item.episode_id)
         cumulative: list[float] = []
         running = 0.0
         for index, result in enumerate(ordered, start=1):
@@ -34,7 +34,7 @@ def aggregate_results(results_root: Path) -> AggregateSummary:
             cumulative.append(running / index)
             if result.metrics.patch_applied and not result.metrics.hidden_tests_passed:
                 regression_failures += 1
-        auac_per_repo[repo_name] = sum(cumulative) / len(cumulative)
+        auac_per_project[project_id] = sum(cumulative) / len(cumulative)
 
     return AggregateSummary(
         total_runs=total_runs,
@@ -42,7 +42,7 @@ def aggregate_results(results_root: Path) -> AggregateSummary:
         mean_mutation_f1=mean_mutation_f1,
         mean_freshness_score=mean_freshness,
         hidden_pass_rate=hidden_pass_rate,
-        auac_per_repo=auac_per_repo,
+        auac_per_project=auac_per_project,
         regression_rate=regression_failures / total_runs,
     )
 

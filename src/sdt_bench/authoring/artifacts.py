@@ -25,7 +25,7 @@ def synthesize_episode_artifacts(
         chunk_size=chunk_size,
         overlap=overlap,
         version_tag=episode.to_state_id,
-        metadata={"episode_id": episode.episode_id, "repo_name": episode.repo_name},
+        metadata={"episode_id": episode.episode_id, "project_id": episode.project_id},
     )
     old_chunks = _build_old_chunks(
         visible_doc_paths=visible_doc_paths,
@@ -89,13 +89,13 @@ def _build_old_chunks(
         chunk_size=chunk_size,
         overlap=overlap,
         version_tag=episode.from_state_id,
-        metadata={"episode_id": episode.episode_id, "repo_name": episode.repo_name},
+        metadata={"episode_id": episode.episode_id, "project_id": episode.project_id},
     )
 
 
 def _resolve_event_dir(episode_dir: Path, episode: EpisodeSpec) -> Path:
-    benchmark_root = episode_dir.parents[2]
-    return benchmark_root / "events" / episode.repo_name / episode.event_id
+    project_root = episode_dir.parent.parent
+    return project_root / "events" / episode.event_id
 
 
 def _resolve_visible_doc_paths(event_dir: Path) -> list[str]:

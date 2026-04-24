@@ -1,2 +1,0 @@
-The second drift event turns deprecations into strict failures. Keep the public greeting stable.
-

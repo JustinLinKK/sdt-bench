@@ -1,0 +1,27 @@
+episode_id: episode_0007
+timeline_id: workflow_app
+project_id: workflow_app
+from_state_id: P3
+to_state_id: P4
+event_id: workflow_app_event_0004
+task_family: dependency_drift
+task_prompt: Adopt the deployment-backed integration path without breaking local runs.
+visible_failure_path: visible_failure/ci_failure.txt
+hidden_test_command: python3 {episode_dir}/hidden_eval/run_hidden.py --workspace {workspace}
+hidden_test_manifest: hidden_eval/tests_manifest.yaml
+expected_files_of_interest:
+- workflow_app/config.py
+- workflow_app/flows/main.py
+- workflow_app/integrations/backend.py
+success_criteria:
+  require_hidden_tests_passed: true
+  require_patch_applied: true
+  max_files_changed: 6
+  max_lines_changed: 220
+budget:
+  max_runtime_seconds: 1200
+  retrieval_top_k: 5
+  max_visible_docs: 6
+  acquisition_budget: 4
+  max_patch_attempts: 1
+notes: workflow_app episode 7 for the workflow_app_event_0004 transition.

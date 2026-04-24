@@ -1,0 +1,3 @@
+tests:
+- name: rag_app_h2_contract
+  description: Validate the hidden H2 state contract for rag_app.

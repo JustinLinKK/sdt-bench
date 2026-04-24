@@ -1,0 +1,19 @@
+state_id: H4
+timeline_id: rag_app
+project_id: rag_app
+timestamp: '2025-11-15T00:00:00+00:00'
+source_ref: rag_app:H4
+python_version: '3.11'
+dependency_snapshot:
+  haystack-ai: 2.8.0
+environment:
+  install_command: python3 -m pip install "haystack-ai==2.8.0" pytest
+  offline: false
+  visible_test_command: python3 -m pytest tests/visible -q
+snapshot_root: product_snapshot
+docs_manifest_path: docs/manifest.yaml
+docs_root: docs
+tests_root: tests/visible
+metadata:
+  product_name: rag_app
+  stage_label: H4

@@ -1,6 +1,0 @@
-tests:
-  - name: import_toy_pkg
-    description: Ensure the package imports.
-  - name: greet_function
-    description: Ensure the greeting stays stable.
-

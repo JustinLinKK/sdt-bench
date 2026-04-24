@@ -1,12 +1,12 @@
-# Repo Onboarding
+# Project Onboarding
 
-To add a new upstream repo:
+To add a new benchmark project:
 
-1. create `configs/repos/<name>.yaml`
-2. add a repo adapter under `src/sdt_bench/repos/` if repo-specific behavior is needed
-3. add one or more episodes under `benchmark_data/episodes/<name>/`
+1. create `benchmark_data/projects/<project_id>/project.yaml`
+2. add `timeline.yaml`, `states/`, `events/`, and `episodes/` under that project root
+3. place runnable source snapshots under each `states/<state_id>/product_snapshot/`
 4. define visible docs, hidden evaluation, and scoring artifacts for each episode
-5. add targeted tests if the repo requires custom environment behavior
+5. add targeted tests if the project requires custom environment behavior
 
-Keep repo-specific logic inside `src/sdt_bench/repos/` so the generic benchmark modules
+Keep project-specific logic inside `src/sdt_bench/projects/` so the generic benchmark modules
 remain reusable.

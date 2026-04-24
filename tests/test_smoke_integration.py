@@ -33,6 +33,9 @@ def test_timeline_smoke_and_memory_modes(tmp_path: Path, monkeypatch) -> None:
     inspect_root = tmp_path / "runtime" / "runs" / "toy" / "inspect" / "inspect" / "steps" / "000__episode_0001"
     docs_manifest = read_json(inspect_root / "input" / "docs" / "manifest.json")
     assert "docs/deprecation_notice.md" not in [item["path"] for item in docs_manifest["documents"]]
+    workspace_init = inspect_root / "input" / "workspace" / "toy_pkg" / "__init__.py"
+    assert workspace_init.exists()
+    assert "def greet" in workspace_init.read_text(encoding="utf-8")
     environment = read_json(inspect_root / "harness" / "environment.json")
     assert environment["install"]["offline_mode"] is True
     assert environment["install"]["environment_overrides"]["PIP_NO_INDEX"] == "1"

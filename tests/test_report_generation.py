@@ -18,7 +18,7 @@ def build_step_result() -> StepEvaluationResult:
         timeline_id="toy",
         episode_id="episode_0001",
         step_index=0,
-        repo_name="toy",
+        project_id="toy",
         run_id="run_123",
         agent_name="baseline:dummy",
         memory_mode="persistent",
@@ -61,7 +61,7 @@ def test_report_generation_renders_step_and_timeline_markdown() -> None:
 
     timeline = TimelineEvaluationResult(
         timeline_id="toy",
-        repo_name="toy",
+        project_id="toy",
         run_id="run_123",
         agent_name="baseline:dummy",
         memory_mode="persistent",

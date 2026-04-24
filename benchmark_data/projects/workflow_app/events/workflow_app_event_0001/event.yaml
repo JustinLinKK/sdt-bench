@@ -1,0 +1,24 @@
+event_id: workflow_app_event_0001
+from_state_id: P0
+to_state_id: P1
+dependency_name: prefect
+ecosystem: pypi
+old_version: 2.16.9
+new_version: 2.18.3
+event_type: minor
+summary: Worker-compatible deployment entrypoints are introduced.
+available_at: '2023-11-01T00:00:00+00:00'
+breaking_change_expected: true
+affected_capability: workflow_app
+visible_doc_paths:
+- visible_docs/release_notes.md
+- visible_docs/migration_guide.md
+gold_mutation_paths:
+- artifacts/gold_mutations.yaml
+expected_retrieval_path: artifacts/expected_retrieval_chunks.yaml
+metadata:
+  product_name: workflow_app
+  breakpoint_id: B0
+  breakpoint_types:
+  - dependency_drift
+  - behavior_change

@@ -52,19 +52,19 @@ class TemporalStateSpec(BaseModel):
 
     state_id: str = Field(min_length=1)
     timeline_id: str = Field(min_length=1)
-    repo_name: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
     timestamp: str = Field(min_length=1)
-    repo_commit: str = Field(min_length=1)
-    repo_ref: str | None = None
+    source_ref: str | None = None
     python_version: str | None = None
     dependency_snapshot: dict[str, str] = Field(default_factory=dict)
     environment: StateEnvironmentSpec
+    snapshot_root: str = "product_snapshot"
     docs_manifest_path: str = "docs/manifest.yaml"
     docs_root: str = "docs"
     tests_root: str = "tests/visible"
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    @field_validator("docs_manifest_path", "docs_root", "tests_root")
+    @field_validator("snapshot_root", "docs_manifest_path", "docs_root", "tests_root")
     @classmethod
     def normalize_relative_paths(cls, value: str) -> str:
         normalized = value.strip().replace("\\", "/")

@@ -1,0 +1,5 @@
+RUNTIME_MODE = 'prefect2'
+DEPLOYMENT_MODE = 'local'
+PARAM_MODEL = 'v1'
+TASK_STYLE = 'sync_only'
+INTEGRATION_BACKEND = 'local'

@@ -1,0 +1,11 @@
+documents:
+- path: docs/api_reference.md
+  available_at: '2026-02-01T00:00:00+00:00'
+  source: state
+  metadata:
+    state_id: toy_2026_02
+- path: docs/baseline.md
+  available_at: '2026-02-01T00:00:00+00:00'
+  source: state
+  metadata:
+    state_id: toy_2026_02

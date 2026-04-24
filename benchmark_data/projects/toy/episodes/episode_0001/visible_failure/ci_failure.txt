@@ -1,0 +1,1 @@
+Toy failure signal placeholder for the synthetic smoke project.

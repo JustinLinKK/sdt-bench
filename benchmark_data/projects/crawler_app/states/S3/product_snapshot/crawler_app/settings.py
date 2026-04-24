@@ -1,0 +1,5 @@
+REACTOR_MODE = 'asyncio'
+START_IMPL = 'async_start'
+OFFSITE_MODE = 'allowlist'
+MIDDLEWARE_STYLE = 'async'
+EXTENSION_STYLE = 'legacy'

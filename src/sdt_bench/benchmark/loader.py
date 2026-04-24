@@ -8,8 +8,8 @@ from sdt_bench.paths import get_benchmark_data_dir, get_config_dir
 from sdt_bench.schemas import (
     DependencyEventSpec,
     DocumentManifest,
+    ProjectSpec,
     ProgrammingEpisodeSpec,
-    RepoSpec,
     TemporalStateSpec,
     TimelineSpec,
 )
@@ -18,11 +18,13 @@ from sdt_bench.utils.fs import read_yaml
 
 @dataclass(slots=True)
 class LoadedStep:
+    project_dir: Path
     episode_dir: Path
     event_dir: Path
     from_state_dir: Path
     to_state_dir: Path
     timeline_path: Path
+    project: ProjectSpec
     episode: ProgrammingEpisodeSpec
     event: DependencyEventSpec
     from_state: TemporalStateSpec
@@ -42,9 +44,10 @@ def load_global_config(config_dir: Path | None = None) -> dict[str, Any]:
     return read_yaml(selected / "global.yaml")
 
 
-def load_repo_spec(repo_name: str, config_dir: Path | None = None) -> RepoSpec:
-    selected = config_dir or get_config_dir()
-    return RepoSpec.model_validate(read_yaml(selected / "repos" / f"{repo_name}.yaml"))
+def load_project_spec(project_id: str, benchmark_data_dir: Path | None = None) -> tuple[Path, ProjectSpec]:
+    data_dir = benchmark_data_dir or get_benchmark_data_dir()
+    project_dir = data_dir / "projects" / project_id
+    return project_dir, ProjectSpec.model_validate(read_yaml(project_dir / "project.yaml"))
 
 
 def load_timeline_spec(path: str | Path) -> tuple[Path, TimelineSpec]:
@@ -70,20 +73,23 @@ def load_episode_spec(path: str | Path) -> tuple[Path, ProgrammingEpisodeSpec]:
 def load_step_bundle(path: str | Path, benchmark_data_dir: Path | None = None) -> LoadedStep:
     episode_dir, episode = load_episode_spec(path)
     data_dir = benchmark_data_dir or get_benchmark_data_dir()
-    timeline_path = data_dir / "timelines" / f"{episode.repo_name}.yaml"
+    project_dir, project = load_project_spec(episode.project_id, benchmark_data_dir=data_dir)
+    timeline_path = project_dir / "timeline.yaml"
     _, timeline = load_timeline_spec(timeline_path)
-    event_dir = data_dir / "events" / episode.repo_name / episode.event_id
-    from_state_dir = data_dir / "states" / episode.repo_name / episode.from_state_id
-    to_state_dir = data_dir / "states" / episode.repo_name / episode.to_state_id
+    event_dir = project_dir / "events" / episode.event_id
+    from_state_dir = project_dir / "states" / episode.from_state_id
+    to_state_dir = project_dir / "states" / episode.to_state_id
     _, event = load_event_spec(event_dir)
     _, from_state = load_state_spec(from_state_dir)
     _, to_state = load_state_spec(to_state_dir)
     return LoadedStep(
+        project_dir=project_dir,
         episode_dir=episode_dir,
         event_dir=event_dir,
         from_state_dir=from_state_dir,
         to_state_dir=to_state_dir,
         timeline_path=timeline_path,
+        project=project,
         episode=episode,
         event=event,
         from_state=from_state,
@@ -103,13 +109,15 @@ def load_state_docs_manifest(
     return DocumentManifest.model_validate(payload)
 
 
-def validate_step(bundle: LoadedStep, repo_spec: RepoSpec) -> dict[str, Any]:
+def validate_step(bundle: LoadedStep) -> dict[str, Any]:
     missing_paths: list[str] = []
 
     if bundle.timeline.timeline_id != bundle.episode.timeline_id:
         raise ValueError("Episode timeline_id does not match the loaded timeline")
-    if bundle.episode.repo_name != bundle.timeline.repo_name:
-        raise ValueError("Episode repo_name does not match the loaded timeline")
+    if bundle.timeline.timeline_id != bundle.project.project_id:
+        raise ValueError("Timeline timeline_id must match the enclosing project_id")
+    if bundle.episode.project_id != bundle.timeline.project_id:
+        raise ValueError("Episode project_id does not match the loaded timeline")
     if bundle.episode.event_id != bundle.event.event_id:
         raise ValueError("Episode event_id does not match the loaded event")
     if bundle.event.from_state_id != bundle.episode.from_state_id:
@@ -126,6 +134,10 @@ def validate_step(bundle: LoadedStep, repo_spec: RepoSpec) -> dict[str, Any]:
         raise ValueError("from_state is not listed in the timeline")
     if bundle.to_state.state_id not in bundle.timeline.state_ids:
         raise ValueError("to_state is not listed in the timeline")
+    if bundle.from_state.project_id != bundle.episode.project_id:
+        raise ValueError("Loaded from_state project_id does not match the episode")
+    if bundle.to_state.project_id != bundle.episode.project_id:
+        raise ValueError("Loaded to_state project_id does not match the episode")
 
     visible_failure = bundle.episode_dir / bundle.episode.visible_failure_path
     if not visible_failure.exists():
@@ -133,6 +145,13 @@ def validate_step(bundle: LoadedStep, repo_spec: RepoSpec) -> dict[str, Any]:
     hidden_manifest = bundle.episode_dir / bundle.episode.hidden_test_manifest
     if not hidden_manifest.exists():
         missing_paths.append(str(hidden_manifest))
+    for required_dir in (
+        bundle.from_state_dir / bundle.from_state.snapshot_root,
+        bundle.to_state_dir / bundle.to_state.snapshot_root,
+        bundle.to_state_dir / bundle.to_state.tests_root,
+    ):
+        if not required_dir.exists():
+            missing_paths.append(str(required_dir))
 
     event_required_paths = [
         *bundle.event.visible_doc_paths,
@@ -151,8 +170,6 @@ def validate_step(bundle: LoadedStep, repo_spec: RepoSpec) -> dict[str, Any]:
 
     if missing_paths:
         raise FileNotFoundError(f"Missing step files: {', '.join(missing_paths)}")
-    if not repo_spec.install_command.strip():
-        raise ValueError("RepoSpec.install_command must be defined")
     if not bundle.to_state.environment.install_command.strip():
         raise ValueError("State environment install_command must be defined")
     if not bundle.episode.hidden_test_command.strip():
@@ -161,7 +178,7 @@ def validate_step(bundle: LoadedStep, repo_spec: RepoSpec) -> dict[str, Any]:
     return {
         "timeline_id": bundle.timeline.timeline_id,
         "episode_id": bundle.episode.episode_id,
-        "repo_name": bundle.episode.repo_name,
+        "project_id": bundle.episode.project_id,
         "from_state_id": bundle.from_state.state_id,
         "to_state_id": bundle.to_state.state_id,
         "event_id": bundle.event.event_id,

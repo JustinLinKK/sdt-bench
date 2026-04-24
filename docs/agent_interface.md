@@ -11,7 +11,7 @@ input/
   from_state.json
   to_state.json
   event.json
-  repo_spec.json
+  project_spec.json
   workspace/
   docs/manifest.json
   docs/available/

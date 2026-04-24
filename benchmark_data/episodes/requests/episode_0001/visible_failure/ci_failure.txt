@@ -1,2 +1,0 @@
-The execution environment now targets urllib3 2.x. Preserve import and request-preparation compatibility.
-

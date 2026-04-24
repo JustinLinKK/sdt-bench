@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from sdt_bench.schemas import RepoSpec, SnapshotManifest
+from sdt_bench.schemas import ProjectSpec, SnapshotManifest
 from sdt_bench.utils.fs import ensure_dir, write_json
 from sdt_bench.utils.git import checkout_commit, clone_repo
 from sdt_bench.utils.subprocess import run_command
@@ -12,18 +12,18 @@ from sdt_bench.utils.time import utc_timestamp
 
 def materialize_snapshot(
     *,
-    repo_spec: RepoSpec,
+    project_spec: ProjectSpec,
     ref: str,
     output_dir: Path,
 ) -> SnapshotManifest:
     if output_dir.exists():
         shutil.rmtree(output_dir)
-    clone_repo(repo_spec.github_url, output_dir)
+    clone_repo(project_spec.framework_repo_url, output_dir)
     checkout_commit(output_dir, ref)
     resolved_commit = run_command(["git", "rev-parse", "HEAD"], cwd=output_dir).stdout.strip()
     manifest = SnapshotManifest(
-        repo_name=repo_spec.name,
-        source_url=repo_spec.github_url,
+        project_id=project_spec.project_id,
+        source_url=project_spec.framework_repo_url,
         requested_ref=ref,
         resolved_commit=resolved_commit,
         workspace_path=str(output_dir),
@@ -33,6 +33,6 @@ def materialize_snapshot(
     return manifest
 
 
-def default_snapshot_path(root: Path, repo_name: str, ref: str) -> Path:
+def default_snapshot_path(root: Path, project_id: str, ref: str) -> Path:
     slug = ref.replace("/", "_").replace(":", "_")
-    return ensure_dir(root / "authoring" / "snapshots" / repo_name) / slug
+    return ensure_dir(root / "authoring" / "snapshots" / project_id) / slug

@@ -9,7 +9,7 @@ from sdt_bench.schemas.event import DependencyEvent, DependencyEventSpec
 from sdt_bench.schemas.io import MemoryManifest, StepInputManifest, StepOutputManifest
 from sdt_bench.schemas.metrics import EvaluationMetrics
 from sdt_bench.schemas.patch import PatchProposal, PatchResult, ReviewResult
-from sdt_bench.schemas.repo import RepoSpec
+from sdt_bench.schemas.project import ProjectSpec
 from sdt_bench.schemas.result import (
     AgentContext,
     AgentPlan,
@@ -58,7 +58,7 @@ __all__ = [
     "PatchResult",
     "ProgrammingEpisodeSpec",
     "ReleaseRecord",
-    "RepoSpec",
+    "ProjectSpec",
     "RetrievalDecision",
     "RetrievalTrace",
     "RetrievedChunk",

@@ -21,7 +21,7 @@ from sdt_bench.authoring import (
 )
 from sdt_bench.benchmark import (
     load_global_config,
-    load_repo_spec,
+    load_project_spec,
     load_step_bundle,
     load_timeline_spec,
     materialize_step,
@@ -46,8 +46,7 @@ app = typer.Typer(add_completion=False, help="Temporal dependency-drift benchmar
 @app.command("validate-step")
 def validate_step_command(episode_path: Path) -> None:
     bundle = load_step_bundle(episode_path)
-    repo_spec = load_repo_spec(bundle.episode.repo_name)
-    summary = validate_step(bundle, repo_spec)
+    summary = validate_step(bundle)
     console.print(summary)
 
 
@@ -60,7 +59,6 @@ def materialize_step_command(
 ) -> None:
     selected_memory_mode = _parse_memory_mode(memory_mode)
     bundle = load_step_bundle(episode_path)
-    repo_spec = load_repo_spec(bundle.episode.repo_name)
     global_config = load_global_config()
     timeline_layout = create_timeline_run_layout(
         global_config,
@@ -73,7 +71,7 @@ def materialize_step_command(
     result = materialize_step(
         global_config=global_config,
         bundle=bundle,
-        repo_spec=repo_spec,
+        project_spec=bundle.project,
         timeline_layout=timeline_layout,
         step_index=step_index,
         agent_name=agent,
@@ -94,7 +92,6 @@ def run_step_command(
     agent_command: str | None = typer.Option(None, "--agent-command"),
 ) -> None:
     bundle = load_step_bundle(episode_path)
-    repo_spec = load_repo_spec(bundle.episode.repo_name)
     global_config = load_global_config()
     timeline_layout = resolve_timeline_run(
         global_config,
@@ -109,7 +106,7 @@ def run_step_command(
         event=bundle.event,
         from_state=bundle.from_state,
         to_state=bundle.to_state,
-        repo_spec=repo_spec,
+        project_spec=bundle.project,
         timeline_layout=timeline_layout,
         step_index=bundle.timeline.episode_ids.index(bundle.episode.episode_id),
         agent_name=agent,
@@ -128,7 +125,6 @@ def evaluate_step_command(
     run_id: str | None = typer.Option(default=None),
 ) -> None:
     bundle = load_step_bundle(episode_path)
-    repo_spec = load_repo_spec(bundle.episode.repo_name)
     global_config = load_global_config()
     timeline_layout = resolve_timeline_run(
         global_config,
@@ -139,7 +135,7 @@ def evaluate_step_command(
     result = evaluate_step(
         global_config=global_config,
         bundle=bundle,
-        repo_spec=repo_spec,
+        project_spec=bundle.project,
         timeline_layout=timeline_layout,
         step_index=bundle.timeline.episode_ids.index(bundle.episode.episode_id),
         agent_name=agent,
@@ -160,7 +156,7 @@ def run_timeline_command(
 ) -> None:
     selected_memory_mode = _parse_memory_mode(memory_mode)
     _, timeline = load_timeline_spec(timeline_path)
-    repo_spec = load_repo_spec(timeline.repo_name)
+    _, project_spec = load_project_spec(timeline.project_id)
     global_config = load_global_config()
     timeline_layout = create_timeline_run_layout(
         global_config,
@@ -171,14 +167,14 @@ def run_timeline_command(
     set_last_run(timeline_layout)
 
     memory_chunks: list[Chunk] = []
-    benchmark_root = get_benchmark_data_dir()
+    project_root = timeline_path.resolve().parent
     for step_index, episode_id in enumerate(timeline.episode_ids):
-        episode_dir = benchmark_root / "episodes" / timeline.repo_name / episode_id
+        episode_dir = project_root / "episodes" / episode_id
         bundle = load_step_bundle(episode_dir)
         materialize_step(
             global_config=global_config,
             bundle=bundle,
-            repo_spec=repo_spec,
+            project_spec=project_spec,
             timeline_layout=timeline_layout,
             step_index=step_index,
             agent_name=agent,
@@ -192,7 +188,7 @@ def run_timeline_command(
             event=bundle.event,
             from_state=bundle.from_state,
             to_state=bundle.to_state,
-            repo_spec=repo_spec,
+            project_spec=project_spec,
             timeline_layout=timeline_layout,
             step_index=step_index,
             agent_name=agent,
@@ -204,7 +200,7 @@ def run_timeline_command(
         evaluate_step(
             global_config=global_config,
             bundle=bundle,
-            repo_spec=repo_spec,
+            project_spec=project_spec,
             timeline_layout=timeline_layout,
             step_index=step_index,
             agent_name=agent,
@@ -222,7 +218,7 @@ def run_timeline_command(
 
     timeline_result = evaluate_timeline(
         timeline=timeline,
-        repo_spec=repo_spec,
+        project_spec=project_spec,
         timeline_layout=timeline_layout,
         agent_name=agent,
         memory_mode=selected_memory_mode,
@@ -258,48 +254,48 @@ def report_timeline_command(
 
 @app.command("author-harvest-releases")
 def author_harvest_releases_command(
-    repo_name: str = typer.Option(..., "--repo-name"),
+    project_id: str = typer.Option(..., "--project-id"),
     max_versions: int = typer.Option(20, "--max-versions"),
     include_advisories: bool = typer.Option(True, "--include-advisories/--no-include-advisories"),
 ) -> None:
-    repo_spec = load_repo_spec(repo_name)
+    _, project_spec = load_project_spec(project_id)
     benchmark_root = get_benchmark_data_dir()
-    output_path = default_release_output_path(benchmark_root, repo_name)
+    output_path = default_release_output_path(benchmark_root, project_id)
     records = harvest_release_records(
-        repo_spec,
+        project_spec,
         max_versions=max_versions,
         include_advisories=include_advisories,
     )
     write_release_records(output_path, records)
-    console.print({"repo_name": repo_name, "releases": len(records), "output_path": str(output_path)})
+    console.print({"project_id": project_id, "releases": len(records), "output_path": str(output_path)})
 
 
 @app.command("author-build-events")
 def author_build_events_command(
-    repo_name: Annotated[str, typer.Option("--repo-name")],
+    project_id: Annotated[str, typer.Option("--project-id")],
     release_path: Annotated[Path | None, typer.Option("--release-path")] = None,
     max_events: Annotated[int | None, typer.Option("--max-events")] = None,
 ) -> None:
-    repo_spec = load_repo_spec(repo_name)
+    _, project_spec = load_project_spec(project_id)
     benchmark_root = get_benchmark_data_dir()
-    selected_release_path = release_path or default_release_output_path(benchmark_root, repo_name)
-    output_path = default_event_output_path(benchmark_root, repo_name)
+    selected_release_path = release_path or default_release_output_path(benchmark_root, project_id)
+    output_path = default_event_output_path(benchmark_root, project_id)
     releases = read_release_records(selected_release_path)
-    events = build_event_stream(repo_spec, releases, max_events=max_events)
+    events = build_event_stream(project_spec, releases, max_events=max_events)
     write_event_stream(output_path, events)
-    console.print({"repo_name": repo_name, "events": len(events), "output_path": str(output_path)})
+    console.print({"project_id": project_id, "events": len(events), "output_path": str(output_path)})
 
 
 @app.command("author-materialize-snapshot")
 def author_materialize_snapshot_command(
-    repo_name: Annotated[str, typer.Option("--repo-name")],
+    project_id: Annotated[str, typer.Option("--project-id")],
     ref: Annotated[str, typer.Option("--ref")],
     output_dir: Annotated[Path | None, typer.Option("--output-dir")] = None,
 ) -> None:
-    repo_spec = load_repo_spec(repo_name)
+    _, project_spec = load_project_spec(project_id)
     benchmark_root = get_benchmark_data_dir()
-    destination = output_dir or default_snapshot_path(benchmark_root, repo_name, ref)
-    manifest = materialize_snapshot(repo_spec=repo_spec, ref=ref, output_dir=destination)
+    destination = output_dir or default_snapshot_path(benchmark_root, project_id, ref)
+    manifest = materialize_snapshot(project_spec=project_spec, ref=ref, output_dir=destination)
     console.print(manifest.model_dump(mode="json"))
 
 

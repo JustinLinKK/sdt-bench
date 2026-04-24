@@ -1,5 +1,0 @@
-tests:
-  - name: requests_package_exists
-    description: Ensure the requests package directory exists in the workspace.
-  - name: adapter_module_exists
-    description: Ensure the adapter module still exists after materialization.

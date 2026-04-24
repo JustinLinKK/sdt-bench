@@ -1,0 +1,5 @@
+REACTOR_MODE = 'sync'
+START_IMPL = 'start_requests'
+OFFSITE_MODE = 'strict'
+MIDDLEWARE_STYLE = 'sync'
+EXTENSION_STYLE = 'legacy'

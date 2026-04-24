@@ -18,7 +18,7 @@ def build_step_result(step_index: int, passed: bool, final_score: float) -> Step
         timeline_id="toy",
         episode_id=f"episode_{step_index:04d}",
         step_index=step_index,
-        repo_name="toy",
+        project_id="toy",
         run_id="run_1",
         agent_name="baseline:dummy",
         memory_mode="persistent",

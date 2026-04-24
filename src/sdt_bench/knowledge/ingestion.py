@@ -29,7 +29,7 @@ def stage_visible_docs(
         version_tag=version_tag,
         metadata={
             "episode_id": episode.episode_id,
-            "repo_name": episode.repo_name,
+            "project_id": episode.project_id,
             "is_visible_doc": True,
         },
     )

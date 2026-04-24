@@ -1,0 +1,19 @@
+state_id: S4
+timeline_id: crawler_app
+project_id: crawler_app
+timestamp: '2026-01-15T00:00:00+00:00'
+source_ref: crawler_app:S4
+python_version: '3.11'
+dependency_snapshot:
+  scrapy: 2.13.3
+environment:
+  install_command: python3 -m pip install "scrapy==2.13.3" pytest
+  offline: false
+  visible_test_command: python3 -m pytest tests/visible -q
+snapshot_root: product_snapshot
+docs_manifest_path: docs/manifest.yaml
+docs_root: docs
+tests_root: tests/visible
+metadata:
+  product_name: crawler_app
+  stage_label: S4
