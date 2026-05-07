@@ -79,4 +79,26 @@ def run_code_from_path(context: Any) -> dict:
         "code_path": str(code_path),
     }
     print(f"[runfile_executor] job={job.job_id[:8]} code={code_path} rc={rc} t={elapsed:.1f}s", flush=True)
+    # Always dump stderr to workdir so failures aren't silent
+    if stderr:
+        (workdir / "stderr.log").write_text(stderr)
+    if stdout:
+        (workdir / "stdout.log").write_text(stdout)
     return result
+
+
+def run_solo_profile(context: Any) -> dict:
+    """Placeholder solo profile so PARALLEL_BATCH_OPTIMIZED planner doesn't deadlock.
+
+    Real planner profiles a job alone first to learn vram + throughput, then uses that
+    for pack placement. For replay we don't have a way to re-profile original code, so
+    we return fixed pessimistic estimates. Planner treats these as fitted facts.
+    """
+    job = context.job
+    return {
+        "vram_mb": 8000,
+        "throughput_samples_s": 100.0,
+        "fitted": True,
+        "stub": True,
+        "job_id": job.job_id,
+    }
