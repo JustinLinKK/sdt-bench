@@ -1,0 +1,64 @@
+{
+  "role": "P2",
+  "job_id": "928b8c64-9284-4106-ace0-7b2826ab90a1",
+  "cache_hit": true,
+  "cache_miss": false,
+  "trial_count": 0,
+  "events": [
+    {
+      "type": "job_dispatched",
+      "payload": {
+        "job_ids": [
+          "928b8c64-9284-4106-ace0-7b2826ab90a1"
+        ],
+        "placement_backend": "exclusive",
+        "placement_mode": "exclusive",
+        "priority": 5,
+        "reason": "mps backend unavailable"
+      }
+    },
+    {
+      "type": "job_ready",
+      "payload": {
+        "priority": 5
+      }
+    },
+    {
+      "type": "job_started",
+      "payload": {
+        "resume": false
+      }
+    },
+    {
+      "type": "batch_probe_cache_hit",
+      "payload": {
+        "device_type": "NVIDIA GeForce RTX 5070 Ti",
+        "probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d",
+        "resolved_batch_size": 164
+      }
+    },
+    {
+      "type": "job_completed",
+      "payload": {
+        "batch_probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d",
+        "batch_probe_source": "cache",
+        "elapsed_s": 6.082895040512085,
+        "final_loss": 0.007485044654458761,
+        "img_size": 224,
+        "peak_vram_mib": 13902.07421875,
+        "resolved_batch_size": 164,
+        "steps": 20
+      }
+    }
+  ],
+  "main_result": {
+    "resolved_batch_size": 164,
+    "img_size": 224,
+    "steps": 20,
+    "elapsed_s": 6.082895040512085,
+    "peak_vram_mib": 13902.07421875,
+    "final_loss": 0.007485044654458761,
+    "batch_probe_source": "cache",
+    "batch_probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "samples": 1501,
+  "gpu_util_mean_pct": 66.62358427714857,
+  "gpu_util_max_pct": 100.0,
+  "gpu_util_p50": 99.0,
+  "gpu_util_p95": 100.0,
+  "vram_mib_mean": 5392.625582944704,
+  "vram_mib_max": 8629.0,
+  "vram_pct_of_16gb_mean": 33.077504649111845,
+  "vram_pct_of_16gb_max": 52.9289087897933,
+  "temp_mean_c": 51.68687541638907,
+  "temp_max_c": 58.0
+}

@@ -9,15 +9,18 @@ import sys
 
 import yaml
 
-
 SCHEDULER_MODE_SERIAL_BASIC = "serial_basic"
-SCHEDULER_MODE_SERIAL_BATCH_OPTIMIZED = "serial_batch_optimized"
-SCHEDULER_MODE_PARALLEL_DEFAULT = "parallel_default"
+SCHEDULER_MODE_SERIAL_BATCH_OPTIMIZED = (
+    "serial_batch_optimized"  # Binary Search + upperlimit (TO be dynamic)
+)
+SCHEDULER_MODE_PARALLEL_DEFAULT = "parallel_default"  #
 SCHEDULER_MODE_PARALLEL_BATCH_OPTIMIZED = "parallel_batch_optimized"
 
 
 def normalize_scheduler_mode(value: str | None) -> str:
-    normalized = str(value or SCHEDULER_MODE_PARALLEL_DEFAULT).strip().lower().replace("-", "_")
+    normalized = (
+        str(value or SCHEDULER_MODE_PARALLEL_DEFAULT).strip().lower().replace("-", "_")
+    )
     allowed = {
         SCHEDULER_MODE_SERIAL_BASIC,
         SCHEDULER_MODE_SERIAL_BATCH_OPTIMIZED,
@@ -199,7 +202,9 @@ class SchedulerSubmissionDefaults:
     packing_eligible: bool = False
     packing_family: str = "mlevolve_script"
     packing_max_slowdown_ratio: float | None = None
-    backend_allowlist: list[str] = field(default_factory=lambda: ["mps", "cuda_process"])
+    backend_allowlist: list[str] = field(
+        default_factory=lambda: ["mps", "cuda_process"]
+    )
     batch_probe_enabled: bool = True
     batch_probe_model_key: str | None = None
     batch_probe_probe_timeout_seconds: int = 45
@@ -213,7 +218,9 @@ class SchedulerSubmissionDefaults:
         if instance.backend_allowlist is None:
             instance.backend_allowlist = ["mps", "cuda_process"]
         else:
-            instance.backend_allowlist = [str(item) for item in instance.backend_allowlist]
+            instance.backend_allowlist = [
+                str(item) for item in instance.backend_allowlist
+            ]
         instance.batch_probe_search_mode = instance.batch_probe_search_mode or "binary"
         return instance
 
@@ -239,7 +246,9 @@ class SchedulerSubmissionDefaults:
 class GpuSchedulerSettings:
     enabled: bool = True
     mode: str = SCHEDULER_MODE_PARALLEL_DEFAULT
-    backend_priority: list[str] = field(default_factory=lambda: ["mps", "stream", "cuda_process", "exclusive"])
+    backend_priority: list[str] = field(
+        default_factory=lambda: ["mps", "stream", "cuda_process", "exclusive"]
+    )
     max_packed_jobs_per_gpu: int = 2
     allow_three_way_packing: bool = False
     candidate_window_size: int = 8
@@ -255,8 +264,12 @@ class GpuSchedulerSettings:
     memory: GpuMemorySettings = field(default_factory=GpuMemorySettings)
     thresholds: GpuThresholdSettings = field(default_factory=GpuThresholdSettings)
     telemetry: GpuTelemetrySettings = field(default_factory=GpuTelemetrySettings)
-    parallel_optimizer: ParallelOptimizerSettings = field(default_factory=ParallelOptimizerSettings)
-    submission_defaults: SchedulerSubmissionDefaults = field(default_factory=SchedulerSubmissionDefaults)
+    parallel_optimizer: ParallelOptimizerSettings = field(
+        default_factory=ParallelOptimizerSettings
+    )
+    submission_defaults: SchedulerSubmissionDefaults = field(
+        default_factory=SchedulerSubmissionDefaults
+    )
     mps: MPSSettings = field(default_factory=MPSSettings)
     cuda_process: CudaProcessSettings = field(default_factory=CudaProcessSettings)
     stream: StreamSettings = field(default_factory=StreamSettings)
@@ -286,11 +299,15 @@ class GpuSchedulerSettings:
         if self.parallel_optimizer is None:
             self.parallel_optimizer = ParallelOptimizerSettings()
         if isinstance(self.parallel_optimizer, dict):
-            self.parallel_optimizer = ParallelOptimizerSettings.from_dict(self.parallel_optimizer)
+            self.parallel_optimizer = ParallelOptimizerSettings.from_dict(
+                self.parallel_optimizer
+            )
         if self.submission_defaults is None:
             self.submission_defaults = SchedulerSubmissionDefaults()
         if isinstance(self.submission_defaults, dict):
-            self.submission_defaults = SchedulerSubmissionDefaults.from_dict(self.submission_defaults)
+            self.submission_defaults = SchedulerSubmissionDefaults.from_dict(
+                self.submission_defaults
+            )
         if self.mps is None:
             self.mps = MPSSettings()
         if isinstance(self.mps, dict):
@@ -382,7 +399,9 @@ class SchedulerSettings:
         self.service_heartbeat_path = self.runtime_root / "service_heartbeat.json"
 
     @classmethod
-    def from_file(cls, path: str | Path | None = None, **overrides: Any) -> "SchedulerSettings":
+    def from_file(
+        cls, path: str | Path | None = None, **overrides: Any
+    ) -> "SchedulerSettings":
         payload: dict[str, Any] = {}
         if path:
             with Path(path).open("r", encoding="utf-8") as handle:

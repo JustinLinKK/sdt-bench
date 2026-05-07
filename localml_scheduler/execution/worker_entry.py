@@ -11,6 +11,7 @@ from ..checkpointing.manager import CheckpointManager
 from ..observability.events import EventLogger
 from ..observability.logging_utils import setup_scheduler_logger
 from ..profiling.batch_probe import run_batch_probe_preflight
+from ..scheduler.green_context import maybe_install_green_context_for_worker
 from ..schemas import JobStatus, import_string
 from ..settings import SchedulerSettings
 from ..storage.sqlite_store import SQLiteStateStore
@@ -47,6 +48,15 @@ def _run_job(runtime_root: str, job_id: str) -> int:
     is_resume = bool(job.latest_checkpoint_path or job.resume_from_checkpoint)
     store.set_job_status(job_id, JobStatus.RUNNING, reason="worker started", hold=False)
     event_logger.emit("job_resumed" if is_resume else "job_started", job_id=job_id, payload={"resume": is_resume})
+
+    # Bootstrap CUDA green context if scheduler reserved SMs for this job.
+    green_info = maybe_install_green_context_for_worker()
+    if green_info is not None:
+        event_logger.emit(
+            "green_context_activated",
+            job_id=job_id,
+            payload={"num_sms": green_info["num_sms"]},
+        )
 
     try:
         context = RunnerContext(

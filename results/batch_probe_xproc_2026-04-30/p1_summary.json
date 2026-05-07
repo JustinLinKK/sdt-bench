@@ -1,0 +1,215 @@
+{
+  "role": "P1",
+  "job_id": "a95aac3a-c56f-4538-a66d-5d541aa03cee",
+  "cache_hit": false,
+  "cache_miss": true,
+  "trial_count": 11,
+  "events": [
+    {
+      "type": "job_dispatched",
+      "payload": {
+        "job_ids": [
+          "a95aac3a-c56f-4538-a66d-5d541aa03cee"
+        ],
+        "placement_backend": "exclusive",
+        "placement_mode": "exclusive",
+        "priority": 5,
+        "reason": "mps backend unavailable"
+      }
+    },
+    {
+      "type": "job_ready",
+      "payload": {
+        "priority": 5
+      }
+    },
+    {
+      "type": "job_started",
+      "payload": {
+        "resume": false
+      }
+    },
+    {
+      "type": "batch_probe_cache_miss",
+      "payload": {
+        "device_type": "NVIDIA GeForce RTX 5070 Ti",
+        "probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d"
+      }
+    },
+    {
+      "type": "batch_probe_started",
+      "payload": {
+        "device_type": "NVIDIA GeForce RTX 5070 Ti",
+        "model_key": "xproc-baseline-shared",
+        "probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d",
+        "shape_signature": "762edea4c5b629779795a7e5380f4be40694998a",
+        "start_batch_size": 24
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 24,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=24",
+        "peak_vram_mb": 2344,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 48,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=48",
+        "peak_vram_mb": 4316,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 96,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=96",
+        "peak_vram_mb": 8287,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 192,
+        "fits": false,
+        "memory_total_mb": 15841,
+        "message": "CUDA out of memory. Tried to allocate 74.00 MiB. GPU 0 has a total capacity of 15.47 GiB of which 24.44 MiB is free. Including non-PyTorch memory, this process has 15.44 GiB memory in use. Of the allocated memory 15.06 GiB is allocated by PyTorch, and 77.63 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+        "peak_vram_mb": 15426,
+        "target_budget_mb": 13905,
+        "within_budget": false
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 144,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=144",
+        "peak_vram_mb": 12252,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 168,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=168",
+        "peak_vram_mb": 14217,
+        "target_budget_mb": 13905,
+        "within_budget": false
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 156,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=156",
+        "peak_vram_mb": 13239,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 162,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=162",
+        "peak_vram_mb": 13724,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 165,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=165",
+        "peak_vram_mb": 13983,
+        "target_budget_mb": 13905,
+        "within_budget": false
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 163,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=163",
+        "peak_vram_mb": 13815,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_trial",
+      "payload": {
+        "batch_size": 164,
+        "fits": true,
+        "memory_total_mb": 15841,
+        "message": "ok bs=164",
+        "peak_vram_mb": 13900,
+        "target_budget_mb": 13905,
+        "within_budget": true
+      }
+    },
+    {
+      "type": "batch_probe_selected",
+      "payload": {
+        "device_type": "NVIDIA GeForce RTX 5070 Ti",
+        "probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d",
+        "resolved_batch_size": 164,
+        "target_budget_mb": 13905,
+        "warning_reason": null
+      }
+    },
+    {
+      "type": "job_completed",
+      "payload": {
+        "batch_probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d",
+        "batch_probe_source": "probe",
+        "elapsed_s": 5.836902856826782,
+        "final_loss": 0.007671476807445288,
+        "img_size": 224,
+        "peak_vram_mib": 13900.98046875,
+        "resolved_batch_size": 164,
+        "steps": 20
+      }
+    }
+  ],
+  "main_result": {
+    "resolved_batch_size": 164,
+    "img_size": 224,
+    "steps": 20,
+    "elapsed_s": 5.836902856826782,
+    "peak_vram_mib": 13900.98046875,
+    "final_loss": 0.007671476807445288,
+    "batch_probe_source": "probe",
+    "batch_probe_key": "ad5c35bc39b2955f87acf06854306c4f0fffa55d"
+  }
+}

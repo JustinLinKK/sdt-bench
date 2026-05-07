@@ -1,6 +1,7 @@
 import logging
 from . import gemini as _gemini
 from . import openai as _openai
+from . import claude_sdk as _claude_sdk
 from .gemini import FunctionSpec, OutputType, PromptType, compile_prompt_to_md
 from config import Config
 logger = logging.getLogger("MLEvolve")
@@ -20,10 +21,14 @@ def _provider(model: str, cfg: Config | None = None) -> str:
     """Select LLM backend from explicit provider first, then legacy model-name routing."""
     stage = _stage_config_for_model(cfg, model)
     provider = (getattr(stage, "provider", "") or "").lower()
+    if provider in {"claude_sdk", "claude-sdk", "anthropic_sdk", "claude"}:
+        return "claude_sdk"
     if provider in {"openrouter", "openai", "openai-compatible"}:
         return "openai"
     if provider in {"gemini", "google"}:
         return "gemini"
+    if (model or "").lower().startswith("claude"):
+        return "claude_sdk"
     return "gemini" if (model or "").lower().startswith("gemini") else "openai"
 
 
@@ -76,7 +81,15 @@ def query(
         logger.info(f"function spec: {func_spec.to_dict()}", extra={"verbose": True})
 
     provider = _provider(model, cfg)
-    if provider == "openai":
+    if provider == "claude_sdk":
+        output, req_time, in_tok_count, out_tok_count, info = _claude_sdk.query(
+            system_message=system_message,
+            user_message=user_message,
+            func_spec=func_spec,
+            cfg=cfg,
+            **model_kwargs,
+        )
+    elif provider == "openai":
         output, req_time, in_tok_count, out_tok_count, info = _openai.query(
             system_message=system_message,
             user_message=user_message,
@@ -107,9 +120,21 @@ def generate(
     max_retries=20,
     retry_delay=3,
 ):
-    """Streaming text generation. Dispatches to Gemini or OpenAI-compatible backend by cfg.agent.code.model."""
+    """Streaming text generation. Dispatches to Claude SDK / Gemini / OpenAI-compatible backend by cfg.agent.code.{model,provider}."""
     model = getattr(cfg.agent.code, "model", "") or ""
-    if _provider(model, cfg) == "openai":
+    provider = _provider(model, cfg)
+    if provider == "claude_sdk":
+        return _claude_sdk.generate(
+            prompt=prompt,
+            cfg=cfg,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stop_tokens=stop_tokens,
+            json_schema=json_schema,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+        )
+    if provider == "openai":
         return _openai.generate(
             prompt=prompt,
             cfg=cfg,

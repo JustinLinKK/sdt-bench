@@ -150,6 +150,15 @@ class BatchProbeSpec:
     model_key: str | None = None
     search_mode: str | None = None
     shape_hints: dict[str, Any] = field(default_factory=dict)
+    # Estimator-based pre-flight (alternative to probe_target). When set, the
+    # scheduler instantiates the model on CPU and computes a static VRAM
+    # estimate -- no GPU search required.
+    model_factory_target: str | None = None  # "module:func" returning nn.Module
+    sample_input_shape: tuple[int, ...] | None = None  # without batch dim
+    optimizer_name: str = "AdamW"
+    mixed_precision: bool = False
+    activation_checkpointing_segments: int = 1
+    workspace_mb_override: int | None = None
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any] | None) -> "BatchProbeSpec":

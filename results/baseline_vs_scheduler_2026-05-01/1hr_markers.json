@@ -1,0 +1,15 @@
+{
+  "t_base_start": 1777678509.8419435,
+  "t_base_end": 1777680493.8519185,
+  "baseline_elapsed_s": 1984.009975062,
+  "t_treat_start": 1777681286.0867248,
+  "t_treat_end": 1777683337.6107247,
+  "treatment_full_elapsed_s": 2051.524,
+  "n_cnn": 15,
+  "n_mlp": 15,
+  "cnn_bs": 48,
+  "cnn_steps": 900,
+  "mlp_bs": 256,
+  "mlp_steps": 12000,
+  "vram_budget_gib": 14.0
+}

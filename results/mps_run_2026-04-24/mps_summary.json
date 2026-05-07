@@ -1,0 +1,90 @@
+{
+  "duration_minutes": 110.0,
+  "num_jobs_requested": 500,
+  "num_jobs_submitted": 503,
+  "by_status": {
+    "COMPLETED": 503
+  },
+  "completed": 503,
+  "failed": 0,
+  "cancelled": 0,
+  "avg_queue_wait_s": 1495.163741664016,
+  "avg_runtime_s": 5.719951387673957,
+  "cache_hit_rate": 0.0,
+  "cache_hits": 0,
+  "cache_misses": 0,
+  "num_pack_dispatches": 54,
+  "num_exclusive_dispatches": 449,
+  "num_pack_fallbacks": 0,
+  "pack_reasons": {
+    "compatible pair selected": 54
+  },
+  "exclusive_reasons": {
+    "primary job needs solo profile": 3,
+    "no compatible partner": 446
+  },
+  "pair_profiles": [
+    {
+      "pair_key": "r50-4gb:b8cec5b42bd6c422::r50-4gb:b8cec5b42bd6c422",
+      "left_signature": "r50-4gb:b8cec5b42bd6c422",
+      "right_signature": "r50-4gb:b8cec5b42bd6c422",
+      "compatible": 1,
+      "observations": 27,
+      "peak_vram_mb": 6893,
+      "avg_gpu_utilization": 0.6766666666666666,
+      "avg_memory_utilization": 0.5533333333333333,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-04-24T19:12:20.761729+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    }
+  ],
+  "solo_profiles": [
+    {
+      "signature": "r50-8gb:e61eba60aa5fa6da",
+      "family": "r50-8gb",
+      "peak_vram_mb": 8624,
+      "avg_gpu_utilization": 0.7000000000000001,
+      "sample_count": 14
+    },
+    {
+      "signature": "r50-4gb:b8cec5b42bd6c422",
+      "family": "r50-4gb",
+      "peak_vram_mb": 4064,
+      "avg_gpu_utilization": 0.4714285714285714,
+      "sample_count": 7
+    },
+    {
+      "signature": "r50-6gb:42428dd10b9cf176",
+      "family": "r50-6gb",
+      "peak_vram_mb": 6144,
+      "avg_gpu_utilization": 0.673,
+      "sample_count": 10
+    }
+  ],
+  "by_family": {
+    "r50-8gb": {
+      "n": 131,
+      "elapsed_sum": 885.429717540741,
+      "peak_vram_sum": 825159.27734375,
+      "mean_elapsed_s": 6.759005477410237,
+      "mean_peak_vram_mib": 6298.92578125
+    },
+    "r50-4gb": {
+      "n": 198,
+      "elapsed_sum": 598.8741774559021,
+      "peak_vram_sum": 464667.328125,
+      "mean_elapsed_s": 3.0246170578580913,
+      "mean_peak_vram_mib": 2346.8046875
+    },
+    "r50-6gb": {
+      "n": 174,
+      "elapsed_sum": 781.7973053455353,
+      "peak_vram_sum": 752575.4033203125,
+      "mean_elapsed_s": 4.49308796175595,
+      "mean_peak_vram_mib": 4325.14599609375
+    }
+  },
+  "vram_budget_gib": 14.0
+}

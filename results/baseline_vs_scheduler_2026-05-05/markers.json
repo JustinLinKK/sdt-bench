@@ -1,0 +1,16 @@
+{
+  "t_base_start": 1778018411.4164367,
+  "t_base_end": 1778020395.4735847,
+  "baseline_elapsed_s": 1984.057148023,
+  "t_treat_start": 1778020403.4806516,
+  "t_treat_end": 1778022698.3598545,
+  "treatment_full_elapsed_s": 2294.879202775,
+  "commit": "a1f3587",
+  "n_cnn": 15,
+  "n_mlp": 15,
+  "cnn_bs": 48,
+  "cnn_steps": 900,
+  "mlp_bs": 256,
+  "mlp_steps": 12000,
+  "vram_budget_gib": 14.0
+}

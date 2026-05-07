@@ -1,0 +1,239 @@
+{
+  "num_jobs_submitted": 35,
+  "by_status": {
+    "COMPLETED": 35
+  },
+  "completed": 35,
+  "failed": 0,
+  "avg_queue_wait_s": 82.94509740000001,
+  "avg_runtime_s": 8.890983942857142,
+  "num_pack_dispatches": 22,
+  "num_exclusive_dispatches": 13,
+  "num_pack_fallbacks": 0,
+  "pack_rate": 0.6285714285714286,
+  "cross_class_packs": 10,
+  "same_class_packs": 12,
+  "pack_pair_keys": {
+    "mlp_medium+mlp_small": 2,
+    "mlp_medium+resnet18": 4,
+    "mlp_small+resnet34": 2,
+    "mlp_small+resnet18": 2,
+    "mlp_large+mlp_medium": 2,
+    "mlp_medium+resnet34": 2,
+    "mlp_large+mlp_large": 4,
+    "resnet18+resnet18": 2,
+    "resnet18+resnet34": 2
+  },
+  "solo_profiles": [
+    {
+      "family": "resnet34",
+      "peak_vram_mb": 3192,
+      "avg_gpu_utilization": 0.8720833333333333,
+      "samples": 24
+    },
+    {
+      "family": "resnet18",
+      "peak_vram_mb": 2508,
+      "avg_gpu_utilization": 0.8093333333333333,
+      "samples": 15
+    },
+    {
+      "family": "mlp_large",
+      "peak_vram_mb": 2656,
+      "avg_gpu_utilization": 1.0,
+      "samples": 2
+    },
+    {
+      "family": "mlp_medium",
+      "peak_vram_mb": 784,
+      "avg_gpu_utilization": 0.0,
+      "samples": 1
+    },
+    {
+      "family": "mlp_small",
+      "peak_vram_mb": 434,
+      "avg_gpu_utilization": 0.0,
+      "samples": 3
+    }
+  ],
+  "pair_profiles": [
+    {
+      "pair_key": "mlp_medium:1aac4c3e6db2a85b::mlp_small:9f95b450fd074e68",
+      "left_signature": "mlp_medium:1aac4c3e6db2a85b",
+      "right_signature": "mlp_small:9f95b450fd074e68",
+      "compatible": 1,
+      "observations": 1,
+      "peak_vram_mb": 1064,
+      "avg_gpu_utilization": 0.25,
+      "avg_memory_utilization": 0.1725,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:25:17.779504+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "mlp_medium:1aac4c3e6db2a85b::resnet18:c3139dc37a9d75fd",
+      "left_signature": "resnet18:c3139dc37a9d75fd",
+      "right_signature": "mlp_medium:1aac4c3e6db2a85b",
+      "compatible": 1,
+      "observations": 2,
+      "peak_vram_mb": 3086,
+      "avg_gpu_utilization": 0.414,
+      "avg_memory_utilization": 0.304,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:26:20.282406+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "mlp_small:9f95b450fd074e68::resnet34:56ecc90d810792af",
+      "left_signature": "resnet34:56ecc90d810792af",
+      "right_signature": "mlp_small:9f95b450fd074e68",
+      "compatible": 1,
+      "observations": 1,
+      "peak_vram_mb": 2850,
+      "avg_gpu_utilization": 0.0,
+      "avg_memory_utilization": 0.0,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:25:32.573920+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "mlp_small:9f95b450fd074e68::resnet18:c3139dc37a9d75fd",
+      "left_signature": "resnet18:c3139dc37a9d75fd",
+      "right_signature": "mlp_small:9f95b450fd074e68",
+      "compatible": 1,
+      "observations": 1,
+      "peak_vram_mb": 2694,
+      "avg_gpu_utilization": 0.33666666666666667,
+      "avg_memory_utilization": 0.12999999999999998,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:25:51.263153+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "mlp_large:739fef47e8fec200::mlp_medium:1aac4c3e6db2a85b",
+      "left_signature": "mlp_large:739fef47e8fec200",
+      "right_signature": "mlp_medium:1aac4c3e6db2a85b",
+      "compatible": 1,
+      "observations": 1,
+      "peak_vram_mb": 3376,
+      "avg_gpu_utilization": 0.51,
+      "avg_memory_utilization": 0.4166666666666667,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:26:04.851285+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "mlp_medium:1aac4c3e6db2a85b::resnet34:56ecc90d810792af",
+      "left_signature": "resnet34:56ecc90d810792af",
+      "right_signature": "mlp_medium:1aac4c3e6db2a85b",
+      "compatible": 1,
+      "observations": 1,
+      "peak_vram_mb": 3770,
+      "avg_gpu_utilization": 0.4,
+      "avg_memory_utilization": 0.296,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:26:52.983041+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "mlp_large:739fef47e8fec200::mlp_large:739fef47e8fec200",
+      "left_signature": "mlp_large:739fef47e8fec200",
+      "right_signature": "mlp_large:739fef47e8fec200",
+      "compatible": 1,
+      "observations": 2,
+      "peak_vram_mb": 5296,
+      "avg_gpu_utilization": 0.7533333333333333,
+      "avg_memory_utilization": 0.6283333333333333,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:28:14.194053+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "resnet18:c3139dc37a9d75fd::resnet18:c3139dc37a9d75fd",
+      "left_signature": "resnet18:c3139dc37a9d75fd",
+      "right_signature": "resnet18:c3139dc37a9d75fd",
+      "compatible": 1,
+      "observations": 1,
+      "peak_vram_mb": 4716,
+      "avg_gpu_utilization": 0.8668181818181818,
+      "avg_memory_utilization": 0.6495454545454545,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:27:57.243869+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    },
+    {
+      "pair_key": "resnet18:c3139dc37a9d75fd::resnet34:56ecc90d810792af",
+      "left_signature": "resnet18:c3139dc37a9d75fd",
+      "right_signature": "resnet34:56ecc90d810792af",
+      "compatible": 1,
+      "observations": 1,
+      "peak_vram_mb": 5400,
+      "avg_gpu_utilization": 0.8939130434782608,
+      "avg_memory_utilization": 0.6417391304347826,
+      "slowdown_ratio": null,
+      "cooldown_until": null,
+      "last_failure_reason": null,
+      "updated_at": "2026-05-01T22:28:40.132301+00:00",
+      "metadata_json": "{\"backend_name\": \"mps\"}"
+    }
+  ],
+  "by_family": {
+    "resnet34": {
+      "n": 7,
+      "elapsed_sum": 113.18296766281128,
+      "vram_sum": 16267.94677734375,
+      "model_class": "?",
+      "mean_elapsed_s": 16.16899538040161,
+      "mean_peak_vram_mib": 2323.9923967633927
+    },
+    "resnet18": {
+      "n": 10,
+      "elapsed_sum": 103.8331470489502,
+      "vram_sum": 15935.5908203125,
+      "model_class": "?",
+      "mean_elapsed_s": 10.38331470489502,
+      "mean_peak_vram_mib": 1593.55908203125
+    },
+    "mlp_large": {
+      "n": 8,
+      "elapsed_sum": 40.376190185546875,
+      "vram_sum": 19351.07421875,
+      "model_class": "MLP",
+      "mean_elapsed_s": 5.047023773193359,
+      "mean_peak_vram_mib": 2418.88427734375
+    },
+    "mlp_medium": {
+      "n": 6,
+      "elapsed_sum": 10.011191844940186,
+      "vram_sum": 2992.3974609375,
+      "model_class": "MLP",
+      "mean_elapsed_s": 1.6685319741566975,
+      "mean_peak_vram_mib": 498.73291015625
+    },
+    "mlp_small": {
+      "n": 4,
+      "elapsed_sum": 1.7514500617980957,
+      "vram_sum": 477.306640625,
+      "model_class": "MLP",
+      "mean_elapsed_s": 0.4378625154495239,
+      "mean_peak_vram_mib": 119.32666015625
+    }
+  },
+  "vram_budget_gib": 14.0
+}

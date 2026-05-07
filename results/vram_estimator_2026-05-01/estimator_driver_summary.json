@@ -1,0 +1,114 @@
+{
+  "preflight_strategy": "estimator",
+  "vram_budget_gib": 14.0,
+  "submitted": [
+    {
+      "label": "A",
+      "job_id": "dbd4c9d9-5470-42e7-8481-72dee7ec7c88"
+    },
+    {
+      "label": "B",
+      "job_id": "350b4712-8a38-4ce3-a666-b7801f3d9366"
+    },
+    {
+      "label": "C",
+      "job_id": "f89219c2-ba30-4dae-b806-fca53c7e00e9"
+    }
+  ],
+  "by_status": {
+    "COMPLETED": 3
+  },
+  "cache_hits": 1,
+  "cache_misses": 2,
+  "estimator_runs": 2,
+  "estimator_failed": 0,
+  "batch_probe_profiles": [
+    {
+      "probe_key": "ee5d88037a4088b66f5a7833cedb0df0b86b75b1",
+      "model_key": "estimator-baseline-shared",
+      "device_type": "NVIDIA GeForce RTX 5070 Ti",
+      "shape_signature": "94153036b656a70c0f1dcb83d9794bb0ad0af794",
+      "batch_param_name": "batch_size",
+      "resolved_batch_size": 122,
+      "peak_vram_mb": 13859,
+      "memory_total_mb": 13905,
+      "target_budget_mb": 13905,
+      "observations": 1,
+      "last_job_id": "dbd4c9d9-5470-42e7-8481-72dee7ec7c88",
+      "updated_at": "2026-05-01T21:06:58.564825+00:00",
+      "metadata_json": "{\"activations_mb\": 10509.621643066406, \"driver_overhead_mb\": 1500.0, \"estimator_total_mb\": 13859.550103759766, \"grads_mb\": 97.49234008789062, \"mixed_precision\": false, \"model_factory_target\": \"localml_scheduler.examples.resnet50_probe_runner:resnet50_factory\", \"n_act_elements\": 22582248, \"n_params\": 25557032, \"notes\": [\"optimizer=AdamW state_factor=2.0\", \"arch_family=ResNet workspace=200\", \"safety_margin_fraction=0.1\"], \"optim_state_mb\": 194.98468017578125, \"optimizer\": \"AdamW\", \"preflight_strategy\": \"estimator\", \"safety_margin_mb\": 1259.959100341797, \"weights_mb\": 97.49234008789062, \"workspace_mb\": 200.0}"
+    },
+    {
+      "probe_key": "45156b6a2c213ce08a86d6c065800fbe1488be7b",
+      "model_key": "estimator-baseline-shared",
+      "device_type": "NVIDIA GeForce RTX 5070 Ti",
+      "shape_signature": "b2d0073989476a4c3c0a4302601c0392c77808a3",
+      "batch_param_name": "batch_size",
+      "resolved_batch_size": 122,
+      "peak_vram_mb": 13859,
+      "memory_total_mb": 13905,
+      "target_budget_mb": 13905,
+      "observations": 1,
+      "last_job_id": "f89219c2-ba30-4dae-b806-fca53c7e00e9",
+      "updated_at": "2026-05-01T21:07:12.121593+00:00",
+      "metadata_json": "{\"activations_mb\": 10509.621643066406, \"driver_overhead_mb\": 1500.0, \"estimator_total_mb\": 13859.550103759766, \"grads_mb\": 97.49234008789062, \"mixed_precision\": false, \"model_factory_target\": \"localml_scheduler.examples.resnet50_probe_runner:resnet50_factory\", \"n_act_elements\": 22582248, \"n_params\": 25557032, \"notes\": [\"optimizer=AdamW state_factor=2.0\", \"arch_family=ResNet workspace=200\", \"safety_margin_fraction=0.1\"], \"optim_state_mb\": 194.98468017578125, \"optimizer\": \"AdamW\", \"preflight_strategy\": \"estimator\", \"safety_margin_mb\": 1259.959100341797, \"weights_mb\": 97.49234008789062, \"workspace_mb\": 200.0}"
+    }
+  ],
+  "by_job_events": {
+    "dbd4c9d9-5470-42e7-8481-72dee7ec7c88": [
+      "job_dispatched",
+      "job_ready",
+      "job_started",
+      "batch_probe_cache_miss",
+      "batch_probe_estimator",
+      "job_completed"
+    ],
+    "350b4712-8a38-4ce3-a666-b7801f3d9366": [
+      "job_ready",
+      "job_dispatched",
+      "job_started",
+      "batch_probe_cache_hit",
+      "job_completed"
+    ],
+    "f89219c2-ba30-4dae-b806-fca53c7e00e9": [
+      "job_ready",
+      "job_dispatched",
+      "job_started",
+      "batch_probe_cache_miss",
+      "batch_probe_estimator",
+      "job_completed"
+    ]
+  },
+  "main_results": {
+    "A": {
+      "resolved_batch_size": 122,
+      "img_size": 224,
+      "steps": 20,
+      "elapsed_s": 4.565520524978638,
+      "peak_vram_mib": 10424.52685546875,
+      "final_loss": 0.005509313195943832,
+      "batch_probe_source": "estimator",
+      "batch_probe_key": "ee5d88037a4088b66f5a7833cedb0df0b86b75b1"
+    },
+    "B": {
+      "resolved_batch_size": 122,
+      "img_size": 224,
+      "steps": 20,
+      "elapsed_s": 4.580467462539673,
+      "peak_vram_mib": 10424.52685546875,
+      "final_loss": 0.005172502715140581,
+      "batch_probe_source": "cache",
+      "batch_probe_key": "ee5d88037a4088b66f5a7833cedb0df0b86b75b1"
+    },
+    "C": {
+      "resolved_batch_size": 122,
+      "img_size": 224,
+      "steps": 20,
+      "elapsed_s": 4.567582368850708,
+      "peak_vram_mib": 10424.52685546875,
+      "final_loss": 0.005746227223426104,
+      "batch_probe_source": "estimator",
+      "batch_probe_key": "45156b6a2c213ce08a86d6c065800fbe1488be7b"
+    }
+  }
+}
