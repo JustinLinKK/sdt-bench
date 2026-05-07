@@ -1,0 +1,323 @@
+"""Generate 6 plots + summary.md from results/sweep_real_delays_2026-05-06/.
+
+Run after run_replay_and_plot.sh (sweep). Reads each config's:
+  summary.json   per_job + by_status + treat_elapsed_s
+  dmon.csv       nvidia-smi dmon -s pucvmet -d 1 -o T
+  wall_clock.txt total elapsed sec
+  submissions.jsonl    per-submission target vs actual submit timestamps
+plus the trace JSONL for the recorded LLM-call timeline.
+
+Outputs:
+  plots/gpu_utility_overlay.png       SM_ACTIVE / DRAM_ACTIVE / FB_MEM / PCIE_RX × 12 configs
+  plots/wallclock_bars.png             12 bars + B1 reference line
+  plots/speedup_heatmap.png            backend × probe × runner
+  plots/arch_sensitivity.png           per-job time by {CNN, Transformer, Mixer}
+  plots/agent_status_per_config.png    12 subplots stage timeline
+  plots/llm_delay_timeline.png         LLM-call delays vs GPU exec windows (from trace)
+  summary.md                           12-row table + key findings
+"""
+from __future__ import annotations
+import csv
+import datetime as dt
+import json
+import os
+import re
+from pathlib import Path
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+REPO = Path(__file__).resolve().parents[2]
+EXP_DIR = Path(__file__).resolve().parent
+RESULTS = Path(os.environ.get("RESULTS_DIR", REPO / "results" / "sweep_real_delays_2026-05-06"))
+TRACE_PATH = Path(os.environ.get("TRACE_PATH", EXP_DIR / "workload_trace_real.jsonl"))
+PLOTS = RESULTS / "plots"
+PLOTS.mkdir(parents=True, exist_ok=True)
+
+CONFIGS = [
+    ("B1",  "serial_basic",            "exclusive", "off",          "scheduler"),
+    ("B2",  "serial_batch_optimized",  "exclusive", "binary",       "scheduler"),
+    ("B3",  "serial_batch_optimized",  "exclusive", "power_of_two", "scheduler"),
+    ("T1",  "parallel_default",        "mps",       "off",          "scheduler"),
+    ("T2",  "parallel_default",        "stream",    "off",          "scheduler"),
+    ("T4",  "parallel_batch_optimized","mps",       "binary",       "scheduler"),
+    ("T5",  "parallel_batch_optimized","mps",       "power_of_two", "scheduler"),
+    ("T6",  "parallel_batch_optimized","stream",    "binary",       "scheduler"),
+    ("T7",  "parallel_batch_optimized","stream",    "power_of_two", "scheduler"),
+    ("T8",  "parallel_batch_optimized","mps",       "binary",       "torch_mp"),
+    ("T9",  "parallel_batch_optimized","mps",       "power_of_two", "torch_mp"),
+    ("T10", "parallel_batch_optimized","stream",    "binary",       "torch_mp"),
+    ("T11", "parallel_batch_optimized","stream",    "power_of_two", "torch_mp"),
+]
+
+
+def parse_dmon(p: Path):
+    if not p.exists():
+        return []
+    rows = []
+    base = None
+    with p.open() as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = re.split(r"\s+", line)
+            if len(parts) < 22:
+                continue
+            try:
+                tt = dt.datetime.strptime(parts[0], "%H:%M:%S")
+                sm_v = float(parts[5])
+                mem_v = float(parts[6])
+                fb_v = float(parts[15])
+                rx_v = float(parts[21])
+            except Exception:
+                continue
+            if base is None:
+                base = tt
+            secs = (tt - base).total_seconds()
+            if secs < 0:
+                secs += 86400
+            rows.append((secs, sm_v, mem_v, fb_v, rx_v))
+    return rows
+
+
+def load_json_safe(p: Path) -> dict:
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return {}
+
+
+def load_wallclock(d: Path) -> float:
+    w = d / "wall_clock.txt"
+    if not w.exists():
+        return 0.0
+    try:
+        return float(w.read_text().strip())
+    except Exception:
+        return 0.0
+
+
+def load_trace(p: Path) -> list[dict]:
+    if not p.exists():
+        return []
+    out = []
+    with p.open() as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    out.append(json.loads(line))
+                except Exception:
+                    pass
+    return out
+
+
+def main():
+    data = {}
+    for cid, mode, backend, probe, runner in CONFIGS:
+        cfg_dir = RESULTS / cid
+        data[cid] = {
+            "mode": mode, "backend": backend, "probe": probe, "runner": runner,
+            "wallclock": load_wallclock(cfg_dir),
+            "summary": load_json_safe(cfg_dir / "summary.json"),
+            "dmon": parse_dmon(cfg_dir / "dmon.csv"),
+        }
+
+    cids = list(data.keys())
+    b1_wc = data.get("B1", {}).get("wallclock", 1.0) or 1.0
+
+    # Plot 1: GPU utility-time overlay
+    fig, axes = plt.subplots(4, 1, figsize=(15, 12), sharex=False)
+    panels = [("SM_ACTIVE %", 1), ("DRAM_ACTIVE %", 2), ("FB MEM (MiB)", 3), ("PCIE RX (MB/s)", 4)]
+    cmap = plt.get_cmap("tab20")
+    for ax, (title, idx) in zip(axes, panels):
+        for i, cid in enumerate(cids):
+            d = data[cid]
+            if not d["dmon"]:
+                continue
+            ts = [r[0] for r in d["dmon"]]
+            ys = [r[idx] for r in d["dmon"]]
+            ax.plot(ts, ys, color=cmap(i % 20), linewidth=0.7, label=cid, alpha=0.7)
+        ax.set_ylabel(title)
+        ax.grid(True, alpha=0.3)
+    axes[-1].set_xlabel("seconds since dmon start")
+    axes[0].legend(loc="upper right", ncol=7, fontsize=7)
+    axes[0].set_title("GPU utility timeline overlay (12 configs)")
+    plt.tight_layout()
+    plt.savefig(PLOTS / "gpu_utility_overlay.png", dpi=110)
+    plt.close()
+    print("wrote gpu_utility_overlay.png")
+
+    # Plot 2: Wall-clock bars
+    wcs = [data[c]["wallclock"] for c in cids]
+    fig, ax = plt.subplots(figsize=(13, 6))
+    colors = ["#7f7f7f" if c.startswith("B")
+              else ("#2ca02c" if data[c]["runner"] == "torch_mp" else "#9467bd")
+              for c in cids]
+    bars = ax.barh(cids, wcs, color=colors, edgecolor="black")
+    ax.axvline(b1_wc, color="red", linestyle="--", label=f"B1 baseline ({b1_wc:.1f}s)")
+    ax.set_xlabel("wall-clock seconds")
+    ax.set_title(f"Total wall-clock per config (B1 baseline = {b1_wc:.0f}s) — REAL LLM delays")
+    for b, t in zip(bars, wcs):
+        sp = b1_wc / t if t > 0 else 0
+        ax.text(t + 5, b.get_y() + b.get_height() / 2, f"{t:.0f}s ({sp:.2f}x)",
+                va="center", fontsize=9)
+    ax.legend()
+    ax.grid(True, axis="x", alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(PLOTS / "wallclock_bars.png", dpi=110)
+    plt.close()
+    print("wrote wallclock_bars.png")
+
+    # Plot 3: Speedup heatmap
+    backends = ["exclusive", "mps", "stream"]
+    probes = ["off", "binary", "power_of_two"]
+    runners = ["scheduler", "torch_mp"]
+    fig, axes = plt.subplots(1, len(runners), figsize=(12, 4), sharey=True)
+    for ax_idx, runner in enumerate(runners):
+        mat = []
+        for probe in probes:
+            row = []
+            for backend in backends:
+                speedup = None
+                for cid, d in data.items():
+                    if d["backend"] == backend and d["probe"] == probe and d["runner"] == runner:
+                        if d["wallclock"] > 0 and b1_wc > 0:
+                            speedup = b1_wc / d["wallclock"]
+                        break
+                row.append(speedup if speedup is not None else float("nan"))
+            mat.append(row)
+        ax = axes[ax_idx] if len(runners) > 1 else axes
+        im = ax.imshow(mat, cmap="RdYlGn", vmin=0.5, vmax=4.0, aspect="auto")
+        ax.set_xticks(range(len(backends)))
+        ax.set_xticklabels(backends)
+        ax.set_yticks(range(len(probes)))
+        ax.set_yticklabels(probes)
+        ax.set_title(f"runner: {runner}")
+        for i, _p in enumerate(probes):
+            for j, _b in enumerate(backends):
+                v = mat[i][j]
+                if v == v:
+                    ax.text(j, i, f"{v:.2f}x", ha="center", va="center", fontsize=10)
+        plt.colorbar(im, ax=ax)
+    fig.suptitle("Speedup heatmap (vs B1 baseline) — real LLM delays")
+    plt.tight_layout()
+    plt.savefig(PLOTS / "speedup_heatmap.png", dpi=110)
+    plt.close()
+    print("wrote speedup_heatmap.png")
+
+    # Plot 4: arch sensitivity (per-job time aggregated by class for selected configs)
+    SELECT = [c for c in cids if c in {"B1", "T2", "T6", "T8", "T10"}]
+    classes = ["CNN", "Transformer", "Mixer"]
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bar_w = 0.15
+    x = list(range(len(classes)))
+    for i, cid in enumerate(SELECT):
+        per_job = (data[cid].get("summary") or {}).get("per_job", []) or []
+        sums = {k: [] for k in classes}
+        for pj in per_job:
+            klass = pj.get("model_class")
+            t = pj.get("elapsed_s")
+            if klass in sums and t is not None:
+                sums[klass].append(t)
+        means = [sum(sums[k]) / len(sums[k]) if sums[k] else 0.0 for k in classes]
+        ax.bar([xx + i * bar_w for xx in x], means, bar_w, label=cid)
+    ax.set_xticks([xx + bar_w * (len(SELECT) - 1) / 2 for xx in x])
+    ax.set_xticklabels(classes)
+    ax.set_ylabel("mean per-submission elapsed (s)")
+    ax.set_title("Arch sensitivity: per-submission time by model class")
+    ax.legend()
+    ax.grid(True, axis="y", alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(PLOTS / "arch_sensitivity.png", dpi=110)
+    plt.close()
+    print("wrote arch_sensitivity.png")
+
+    # Plot 5: Agent status per config
+    fig, axes = plt.subplots(4, 4, figsize=(20, 14), sharex=False)
+    axes_flat = axes.flatten()
+    for ax_idx, cid in enumerate(cids):
+        ax = axes_flat[ax_idx]
+        d = data[cid]
+        per_job = (d.get("summary") or {}).get("per_job", []) or []
+        for j_idx, j in enumerate(per_job):
+            stage = j.get("agent_used") or "unknown"
+            color = {"draft": "#7f7f7f", "improve": "#9467bd",
+                     "debug": "#1f77b4", "evolution": "#2ca02c",
+                     "fusion": "#d62728"}.get(stage, "#cccccc")
+            x = j.get("step_idx", j_idx)
+            ax.barh(0, 1, left=x, color=color, edgecolor="black", height=0.6)
+            ax.text(x + 0.5, 0, (stage or "?")[:3], ha="center", va="center", fontsize=7)
+        ax.set_title(cid, fontsize=10)
+        ax.set_yticks([])
+        ax.set_xlabel("step idx")
+    for ax_idx in range(len(cids), len(axes_flat)):
+        axes_flat[ax_idx].axis("off")
+    fig.suptitle("Agent status by step (per config)")
+    plt.tight_layout()
+    plt.savefig(PLOTS / "agent_status_per_config.png", dpi=110)
+    plt.close()
+    print("wrote agent_status_per_config.png")
+
+    # Plot 6: LLM-delay timeline (from trace)
+    trace = load_trace(TRACE_PATH)
+    if trace:
+        fig, ax = plt.subplots(figsize=(15, 6))
+        max_t = 0.0
+        for s_idx, step in enumerate(trace):
+            llm_calls = step.get("llm_calls", []) or []
+            for c in llm_calls:
+                start = c.get("start_at", 0.0)
+                end = c.get("end_at", start)
+                phase = c.get("phase", "?")
+                color = {"step": "#9467bd", "deferred": "#1f77b4",
+                         "debug": "#d62728"}.get(phase, "#666666")
+                ax.barh(s_idx, end - start, left=start, color=color, alpha=0.7, edgecolor="none", height=0.8)
+                max_t = max(max_t, end)
+            for sub in step.get("submissions", []) or []:
+                t0 = sub.get("submit_at_real_s", 0.0)
+                t1 = t0 + (sub.get("exec_duration_s_real") or 0.0)
+                ax.barh(s_idx, max(0.5, t1 - t0), left=t0, color="#2ca02c", alpha=0.5, edgecolor="black", height=0.6)
+                max_t = max(max_t, t1)
+        ax.set_xlabel("seconds since MLEvolve start (recorded)")
+        ax.set_ylabel("step idx")
+        ax.set_title("LLM-call (purple/blue) + GPU-exec (green) timeline — recorded real trace")
+        ax.set_xlim(0, max_t * 1.05)
+        ax.grid(True, axis="x", alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(PLOTS / "llm_delay_timeline.png", dpi=110)
+        plt.close()
+        print("wrote llm_delay_timeline.png")
+    else:
+        print("WARN: trace file empty; skipping llm_delay_timeline.png")
+
+    # summary.md
+    md = []
+    md.append("# Sweep Real-Trace Results — 12-Config × Recorded LLM Delays\n\n")
+    md.append("## Setting\n")
+    md.append("- Workload: cassava-leaf-disease-classification (12 GB)\n")
+    md.append("- Trace: real MLEvolve run driven by Claude opus 4.7 (claude_agent_sdk)\n")
+    md.append("- LLM delays: REPLAYED with `--time-scale 1.0` (full real-time)\n\n")
+    md.append("## Per-config wall-clock\n\n")
+    md.append("| ID | Mode | Backend | Probe | Runner | Wall-clock | Speedup vs B1 |\n")
+    md.append("|---|---|---|---|---|---|---|\n")
+    for cid in cids:
+        d = data[cid]
+        sp = (b1_wc / d["wallclock"]) if d["wallclock"] > 0 else 0.0
+        md.append(f"| {cid} | {d['mode']} | {d['backend']} | {d['probe']} | {d['runner']} | "
+                  f"{d['wallclock']:.1f}s | {sp:.2f}x |\n")
+    md.append("\n## Plots\n\n")
+    for p in ["gpu_utility_overlay.png", "wallclock_bars.png", "speedup_heatmap.png",
+              "arch_sensitivity.png", "agent_status_per_config.png", "llm_delay_timeline.png"]:
+        md.append(f"- ![{p}](plots/{p})\n")
+    out = RESULTS / "summary.md"
+    out.write_text("".join(md))
+    print(f"wrote {out}")
+
+
+if __name__ == "__main__":
+    main()
