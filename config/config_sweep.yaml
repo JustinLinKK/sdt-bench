@@ -5,8 +5,8 @@ defaults:
 use_grading_server: false
 
 agent:
-  steps: 20
-  initial_drafts: 3
+  steps: 8
+  initial_drafts: 2
   search:
     parallel_search_num: 1   # serial recording for deterministic trace
   code:
